@@ -2,10 +2,12 @@
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
-const DELTA_TIME: f32 = 1. / 60.;
+const GRAVITY: f32 = -9.8;
 
 use bevy::{
-    prelude::{Component, Res, Vec2, Query, Mesh, shape, Transform, Vec3, Material, Resource, Bundle},
+    prelude::{
+        shape, Bundle, Component, Material, Mesh, Query, Res, Resource, Transform, Vec2, Vec3,
+    },
     time::Time,
 };
 
@@ -44,15 +46,20 @@ pub struct Velocity {
 }
 
 impl Velocity {
-    pub fn new(x: f32, y: f32) -> Self { Self { vec: Vec2::new(x, y) } }
+    pub fn new(x: f32, y: f32) -> Self {
+        Self {
+            vec: Vec2::new(x, y),
+        }
+    }
 }
 
 impl Default for Velocity {
     fn default() -> Self {
-        Self { vec: Vec2::new(0.0, 0.0) }
+        Self {
+            vec: Vec2::new(0.0, 0.0),
+        }
     }
 }
-
 
 #[derive(Default, Debug, Bundle)]
 pub struct ParticleBundle {
@@ -63,8 +70,9 @@ pub struct ParticleBundle {
 }
 
 /// Moves objects in the physics world
-pub fn simulate(mut query: Query<(&mut Transform, &Mass, &mut Velocity)>) {
-    for (mut pos, mass, velocity) in query.iter_mut() {
-        pos.translation.y += velocity.into_inner().vec[1] * DELTA_TIME;
+pub fn simulate(time: Res<Time>, mut query: Query<(&mut Transform, &Mass, &mut Velocity)>) {
+    for (mut pos, mass, mut velocity) in query.iter_mut() {
+        pos.translation.y += velocity.vec[1] * time.delta_seconds();
+        velocity.vec[1] += GRAVITY * time.delta_seconds();
     }
 }

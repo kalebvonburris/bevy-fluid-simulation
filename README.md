@@ -24,4 +24,4 @@ git clone https://github.com/kalebvonburris/bevy-fluid-simulation
 cargo run --release
 ```
 
-Note: *Bevy is an entire game engine. Thus, the build generated will create several gigabytes of extra data (3-4GB).*
+Note: *Bevy is an entire game engine. Thus, the build generated will take several minutes (for my 8-core AMD rig, 3-4 minutes) and create several gigabytes of extra data (3-4GB).*

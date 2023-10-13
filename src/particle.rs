@@ -14,14 +14,12 @@ use bevy::{
     time::Time, window::Window,
 };
 
-use std::cmp::min;
-
 #[derive(Debug, Resource)]
 pub struct Gravity(Vec2);
 
 impl Default for Gravity {
     fn default() -> Self {
-        Self(Vec2::new(0., -9.81))
+        Self(Vec2::new(0., -90.81))
     }
 }
 
@@ -74,12 +72,33 @@ pub struct ParticleBundle {
     pub velocity: Velocity,
 }
 
-fn border_collision(pos: &Transform, window: &Window) -> bool {
+fn border_collision(pos: &mut Transform, velocity: &mut Velocity, window: &Window) {
     let win_width = window.width();
     let win_height = window.height();
-    if pos.translation.x > win_width / 2.0 || pos.translation.x < -1.0 * win_width / 2.0 { return true; }
-    if pos.translation.y > win_height / 2.0 || pos.translation.y < -1.0 * win_height / 2.0 { return true; }
-    false
+    let mut collision: bool = false;
+
+    if pos.translation.x > win_width / 2.0  { 
+        pos.translation.x = win_width / 2.0;
+        collision = true;
+    }
+    if pos.translation.x < -1.0 * win_width / 2.0 {
+        pos.translation.x = -1.0 * win_width / 2.0;
+        collision = true;
+    }
+    if pos.translation.y > win_height / 2.0 {
+        pos.translation.y = win_height / 2.0;
+        collision = true;
+    }
+    
+    if pos.translation.y < -1.0 * win_height / 2.0 { 
+        pos.translation.y = -1.0 * win_height / 2.0;
+        collision = true;
+    }
+    
+    if collision {
+        velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
+        velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
+    }
 }
 
 /// Moves objects in the physics world
@@ -100,9 +119,17 @@ pub fn simulate(
         velocity.vec[0] += gravity.0[0] * delta_seconds;
         velocity.vec[1] += gravity.0[1] * delta_seconds;
         // Check for collision
-        if border_collision(&pos, window.single_mut()) {
-            velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
-            velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
-        }
+        border_collision(&mut pos, &mut velocity, window.single_mut());
     }
+
+    /*let particle_positions: Vec<&mut Transform> = query.iter_combinations_mut();
+
+    while let Some([(pos1, mass1, vel1), (pos2, mass2, vel2)]) =
+        iter.fetch_next()
+    {
+        let delta = pos2.translation() - pos1.translation();
+        let distance_sq: f32 = delta.length_squared();
+       
+
+    }*/
 }

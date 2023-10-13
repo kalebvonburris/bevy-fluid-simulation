@@ -15,10 +15,10 @@ It's recommended to install Rust via [Rustup](https://rustup.rs/).
 To run this project locally, clone this repository:
 
 ```bash
-git clone https://github.com/TODO!
+git clone https://github.com/bevy-fluid-simulation
 ```
 
-`cd` into `TODO!` and execute the following command:
+`cd` into `bevy-fluid-simulation` and execute the following command:
 
 ```bash
 cargo run --release

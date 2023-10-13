@@ -1,4 +1,4 @@
-﻿# Bevy Fluid Simulation'
+﻿# Bevy Fluid Simulation
 
 A fluid simulation written in Rust using the [Bevy](https://bevyengine.org/) game engine.
 
@@ -23,3 +23,5 @@ git clone https://github.com/kalebvonburris/bevy-fluid-simulation
 ```bash
 cargo run --release
 ```
+
+Note: *Bevy is an entire game engine. Thus, the build generated will create several gigabytes of extra data (3-4GB).*

@@ -2,33 +2,69 @@
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
-
+const DELTA_TIME: f32 = 1. / 60.;
 
 use bevy::{
-    prelude::{Component, Res, Vec2},
+    prelude::{Component, Res, Vec2, Query, Mesh, shape, Transform, Vec3, Material, Resource, Bundle},
     time::Time,
 };
 
-/// A 2 coordinate point representing
-/// where a particle is in space.
-pub struct Coordinate {
-    pub x: f64,
-    pub y: f64,
-}
-/// A particle of fluid.
-#[derive(Component)]
-pub struct Particle {
-    coordinate: Coordinate,
-    velocity: Vec2,
-}
+#[derive(Debug, Resource)]
+pub struct Gravity(pub Vec2);
 
-impl Particle {
-    fn update_position(&mut self, time_step: f64) {
-        self.coordinate.x += self.velocity.x as f64 * time_step;
-        self.coordinate.y += self.velocity.y as f64 * time_step;
+impl Default for Gravity {
+    fn default() -> Self {
+        Self(Vec2::new(0., -9.81))
     }
 }
 
-pub fn particle_system(time: Res<Time>) {
-    //println!("Time: {:?}", time);
+#[derive(Component, Debug)]
+pub struct Mass(pub f32);
+
+impl Default for Mass {
+    fn default() -> Self {
+        Self(1.) // Default to 1 kg
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct CircleCollider {
+    pub radius: f32,
+}
+
+impl Default for CircleCollider {
+    fn default() -> Self {
+        Self { radius: 0.5 }
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct Velocity {
+    pub vec: Vec2,
+}
+
+impl Velocity {
+    pub fn new(x: f32, y: f32) -> Self { Self { vec: Vec2::new(x, y) } }
+}
+
+impl Default for Velocity {
+    fn default() -> Self {
+        Self { vec: Vec2::new(0.0, 0.0) }
+    }
+}
+
+
+#[derive(Default, Debug, Bundle)]
+pub struct ParticleBundle {
+    pub pos: Transform,
+    pub mass: Mass,
+    pub collider: CircleCollider,
+    pub velocity: Velocity,
+}
+
+/// Moves objects in the physics world
+pub fn simulate(mut query: Query<(&mut Transform, &Mass, &mut Velocity)>) {
+    for (mut pos, mass, velocity) in query.iter_mut() {
+        pos.translation.y += velocity.into_inner().vec[1] * DELTA_TIME;
+    }
 }

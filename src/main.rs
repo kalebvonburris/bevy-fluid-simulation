@@ -10,10 +10,13 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 fn main() {
     App::new()
+        .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
+        .init_resource::<Gravity>()
         .add_systems(Startup, setup)
-        .add_systems(Update, particle_system)
         .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(Update, simulate)
         .run();
 }
 
@@ -24,18 +27,20 @@ fn setup(
 ) {
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
-    
+
     // PURPLE CIRCLES!!!
-    for y in 0..10 {
-        for x in 0..10 {
-            commands.spawn(MaterialMesh2dBundle {
+    for y in -50..50 {
+        for x in -50..50 {
+            commands.spawn(
+                MaterialMesh2dBundle {
                 mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
-                transform: Transform::from_xyz(
-                    (x * 10) as f32, 
-                    (y * 10) as f32, 
-                    0.).with_scale(Vec3::splat(10.)),
-                material: materials.add(ColorMaterial::from(Color::PURPLE)),
-                ..default()
+                material: materials.add(ColorMaterial::from(Color::BLUE)),
+                ..default()}
+            ).insert(ParticleBundle {
+                pos: Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0).with_scale(Vec3::splat(10.0)),
+                mass: Mass(1.0),
+                collider: CircleCollider::default(),
+                velocity: Velocity::new(0.0, -1.0)
             });
         }
     }

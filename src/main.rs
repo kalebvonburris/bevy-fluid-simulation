@@ -1,7 +1,10 @@
 // main.rs
 // Kaleb Burris
 // 10-12-2023
-// TODO: Write file description.
+// The code containing the application startup for `bevy-fluid-simulation`.
+
+mod particle;
+use particle::*;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
@@ -9,6 +12,7 @@ fn main() {
     App::new()
     .add_plugins(DefaultPlugins)
     .add_systems(Startup, setup)
+    .add_systems(Update, particle_system)
     .add_systems(Update, bevy::window::close_on_esc)
     .run();
 }

@@ -6,7 +6,11 @@
 mod particle;
 use particle::*;
 
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle, diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin}};
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    sprite::MaterialMesh2dBundle,
+};
 
 fn main() {
     App::new()
@@ -31,7 +35,7 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // PURPLE CIRCLES!!!
-    for y in -50..50 {
+    for y in -10..10 {
         for x in -50..50 {
             commands
                 .spawn(MaterialMesh2dBundle {

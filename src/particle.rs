@@ -2,17 +2,22 @@
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
-const GRAVITY: f32 = -9.8;
+
+// The amount of velocity lost on a collision.
+const PARTICLE_DAMPENING_FACTOR: f32 = 1.0;
+
+// Max 60fps.
+const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
 use bevy::{
-    prelude::{
-        shape, Bundle, Component, Material, Mesh, Query, Res, Resource, Transform, Vec2, Vec3,
-    },
-    time::Time,
+    prelude::{Bundle, Component, Query, Res, Resource, Transform, Vec2},
+    time::Time, window::Window,
 };
 
+use std::cmp::min;
+
 #[derive(Debug, Resource)]
-pub struct Gravity(pub Vec2);
+pub struct Gravity(Vec2);
 
 impl Default for Gravity {
     fn default() -> Self {
@@ -69,10 +74,35 @@ pub struct ParticleBundle {
     pub velocity: Velocity,
 }
 
+fn border_collision(pos: &Transform, window: &Window) -> bool {
+    let win_width = window.width();
+    let win_height = window.height();
+    if pos.translation.x > win_width / 2.0 || pos.translation.x < -1.0 * win_width / 2.0 { return true; }
+    if pos.translation.y > win_height / 2.0 || pos.translation.y < -1.0 * win_height / 2.0 { return true; }
+    false
+}
+
 /// Moves objects in the physics world
-pub fn simulate(time: Res<Time>, mut query: Query<(&mut Transform, &Mass, &mut Velocity)>) {
+pub fn simulate(
+    time: Res<Time>,
+    gravity: Res<Gravity>,
+    mut window: Query<&Window>,
+    mut query: Query<(&mut Transform, &Mass, &mut Velocity)>,
+) {
+    let delta_seconds = DELTA_TIME_MAX;
+    let gravity = gravity.into_inner();
+
     for (mut pos, mass, mut velocity) in query.iter_mut() {
-        pos.translation.y += velocity.vec[1] * time.delta_seconds();
-        velocity.vec[1] += GRAVITY * time.delta_seconds();
+        // Move by the velocity we've stored.
+        pos.translation.x += velocity.vec[0] * delta_seconds;
+        pos.translation.y += velocity.vec[1] * delta_seconds;
+        // Apply physics!
+        velocity.vec[0] += gravity.0[0] * delta_seconds;
+        velocity.vec[1] += gravity.0[1] * delta_seconds;
+        // Check for collision
+        if border_collision(&pos, window.single_mut()) {
+            velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
+            velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
+        }
     }
 }

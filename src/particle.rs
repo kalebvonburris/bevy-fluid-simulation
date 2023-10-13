@@ -3,32 +3,18 @@
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
 
-use bevy::prelude::Component;
+
+use bevy::{
+    prelude::{Component, Res, Vec2},
+    time::Time,
+};
 
 /// A 2 coordinate point representing
 /// where a particle is in space.
-struct Coordinate {
-    x: f64,
-    y: f64,
+pub struct Coordinate {
+    pub x: f64,
+    pub y: f64,
 }
-
-/// A 2 coordinate vector representing
-/// x and y magnitudes.
-struct Vec2(f64, f64);
-
-impl Vec2 {
-    /// Returns the manitude of the vector.
-    fn mag(&self) -> f64 {
-        ((self.0 * self.0) + ( self.1 * self.1)).sqrt()
-    }
-
-    /// Returns the normalized unit vector.
-    fn normalize(&self) -> Vec2 {
-        let magnitude = self.mag();
-        Vec2(self.0 / magnitude, self.1 / magnitude)
-    }
-}
-
 /// A particle of fluid.
 #[derive(Component)]
 pub struct Particle {
@@ -36,8 +22,13 @@ pub struct Particle {
     velocity: Vec2,
 }
 
-impl Particle { /* TODO! */}
+impl Particle {
+    fn update_position(&mut self, time_step: f64) {
+        self.coordinate.x += self.velocity.x as f64 * time_step;
+        self.coordinate.y += self.velocity.y as f64 * time_step;
+    }
+}
 
-pub fn particle_system() {
-    todo!()
+pub fn particle_system(time: Res<Time>) {
+    //println!("Time: {:?}", time);
 }

@@ -10,11 +10,11 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 fn main() {
     App::new()
-    .add_plugins(DefaultPlugins)
-    .add_systems(Startup, setup)
-    .add_systems(Update, particle_system)
-    .add_systems(Update, bevy::window::close_on_esc)
-    .run();
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        .add_systems(Update, particle_system)
+        .add_systems(Update, bevy::window::close_on_esc)
+        .run();
 }
 
 fn setup(
@@ -24,11 +24,19 @@ fn setup(
 ) {
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
-    // PURPLE SQUARE!!!
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
-        transform: Transform::default().with_scale(Vec3::splat(128.)),
-        material: materials.add(ColorMaterial::from(Color::PURPLE)),
-        ..default()
-    });
+    
+    // PURPLE CIRCLES!!!
+    for y in 0..10 {
+        for x in 0..10 {
+            commands.spawn(MaterialMesh2dBundle {
+                mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
+                transform: Transform::from_xyz(
+                    (x * 10) as f32, 
+                    (y * 10) as f32, 
+                    0.).with_scale(Vec3::splat(10.)),
+                material: materials.add(ColorMaterial::from(Color::PURPLE)),
+                ..default()
+            });
+        }
+    }
 }

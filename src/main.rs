@@ -18,7 +18,7 @@ fn main() {
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
         .add_plugins(LogDiagnosticsPlugin::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin)
         .init_resource::<Gravity>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
@@ -35,8 +35,8 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // PURPLE CIRCLES!!!
-    for y in -10..10 {
-        for x in -50..50 {
+    for y in -5..5 {
+        for x in -25..25 {
             commands
                 .spawn(MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
@@ -47,8 +47,8 @@ fn setup(
                     pos: Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0)
                         .with_scale(Vec3::splat(10.0)),
                     mass: Mass(1.0),
-                    collider: CircleCollider::default(),
-                    velocity: Velocity::new(0.0, -9.8),
+                    collider: CircleCollider::new(10.0),
+                    velocity: Velocity::new(0.0, 0.0),
                 });
         }
     }

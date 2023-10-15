@@ -1,4 +1,4 @@
-﻿// particle.rs
+// particle.rs
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
@@ -126,7 +126,9 @@ pub fn simulate(
 
     let mut combinations = query.iter_combinations_mut();
 
-    while let Some([(mut pos, _mass, mut velocity), (mut other_pos, _, mut other_velocity)])  = combinations.fetch_next()  {
+    while let Some([(mut pos, _mass, mut velocity), (mut other_pos, _, mut other_velocity)]) =
+        combinations.fetch_next()
+    {
         let distance = (other_pos.translation - pos.translation).length();
         if distance < 10.0 {
             // Directional vector from pos to other_pos.
@@ -154,7 +156,7 @@ pub fn simulate(
         // Move by the velocity we've stored.
         pos.translation.x += velocity.vec[0] * delta_seconds;
         pos.translation.y += velocity.vec[1] * delta_seconds;
-        
+
         // Check for collision
         border_collision(&mut pos, &mut velocity, window.single_mut());
     }
@@ -171,9 +173,8 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     // Vector pointing from pos1 to pos2.
     // We normalize and then apply a force function
     // based on the distance between the particles.
-    let vec = 
-    (pos1.translation - pos2.translation).normalize() / 2.0
-    * (distance - SMOOTHING_RADIUS).powf(2.0);
+    let vec = (pos1.translation - pos2.translation).normalize() / 2.0
+        * (distance - SMOOTHING_RADIUS).powf(2.0);
     // Reduce the force generated so we have
     // less chaotic particles.
     Vec2::new(vec.x, vec.y)

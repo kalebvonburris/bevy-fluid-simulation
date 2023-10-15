@@ -23,7 +23,7 @@ pub struct Gravity(Vec2);
 
 impl Default for Gravity {
     fn default() -> Self {
-        Self(Vec2::new(0., -98.0))
+        Self(Vec2::new(0.0, -98.0))
     }
 }
 

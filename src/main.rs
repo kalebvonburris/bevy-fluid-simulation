@@ -35,7 +35,7 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // PURPLE CIRCLES!!!
-    for y in -5..5 {
+    for y in -10..10 {
         for x in -25..25 {
             commands
                 .spawn(MaterialMesh2dBundle {

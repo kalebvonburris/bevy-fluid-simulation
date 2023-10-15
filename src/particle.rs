@@ -7,7 +7,7 @@
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.9;
 
 //
-const SMOOTHING_RADIUS: f32 = 100.0;
+const SMOOTHING_RADIUS: f32 = 25.0;
 
 // Max 60fps.
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
@@ -123,17 +123,21 @@ pub fn simulate(
 ) {
     let delta_seconds = DELTA_TIME_MAX.max(time.delta_seconds());
     let gravity = gravity.into_inner();
-    let mut combinations = query.iter_combinations_mut();
 
-    while let Some([(mut pos1, _mass, mut velocity), (other_pos, _, mut other_velocity)])  = combinations.fetch_next()  {
+    for (mut pos, _, mut velocity) in query.iter_mut() {
         // Move by the velocity we've stored.
-        pos1.translation.x += velocity.vec[0] * delta_seconds;
-        pos1.translation.y += velocity.vec[1] * delta_seconds;
+        pos.translation.x += velocity.vec[0] * delta_seconds;
+        pos.translation.y += velocity.vec[1] * delta_seconds;
         // Apply physics!
         velocity.vec[0] += gravity.0[0] * delta_seconds;
         velocity.vec[1] += gravity.0[1] * delta_seconds;
         // Check for collision
-        border_collision(&mut pos1, &mut velocity, window.single_mut());
+        border_collision(&mut pos, &mut velocity, window.single_mut());
+    }
+
+    let mut combinations = query.iter_combinations_mut();
+
+    while let Some([(pos1, _mass, mut velocity), (other_pos, _, mut other_velocity)])  = combinations.fetch_next()  {
         // Apply fluid dispersion force.
         let force = calculate_force(&pos1, &other_pos);
         velocity.vec[0] += force.x * delta_seconds / 2.0;

@@ -1,4 +1,4 @@
-// particle.rs
+﻿// particle.rs
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
@@ -173,8 +173,8 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     // Vector pointing from pos1 to pos2.
     // We normalize and then apply a force function
     // based on the distance between the particles.
-    let vec = (pos1.translation - pos2.translation).normalize() / 2.0
-        * (distance - SMOOTHING_RADIUS).powf(2.0);
+    let vec = ((pos1.translation - pos2.translation).normalize() / 2.0)
+        * (SMOOTHING_RADIUS - distance).powf(2.0);
     // Reduce the force generated so we have
     // less chaotic particles.
     Vec2::new(vec.x, vec.y)

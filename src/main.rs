@@ -49,6 +49,7 @@ fn setup(
                     mass: Mass(1.0),
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0),
+                    color: (),
                 });
         }
     }

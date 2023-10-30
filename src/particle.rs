@@ -1,4 +1,4 @@
-// particle.rs
+﻿// particle.rs
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
@@ -80,6 +80,7 @@ pub struct ParticleBundle {
     pub mass: Mass,
     pub collider: CircleCollider,
     pub velocity: Velocity,
+    pub color: (), // TODO: Apply color to particles based on absolute velocity.
 }
 
 /// Detects if a particle is outside of the window, reverses it velocity, and moves it back into the window.
@@ -88,44 +89,54 @@ fn border_collision(pos: &mut Transform, velocity: &mut Velocity, window: &Windo
     let win_height = window.height();
     let mut collision: bool = false;
 
+    // Particle is to the right edge of the window
     if pos.translation.x > win_width / 2.0 {
         pos.translation.x = win_width / 2.0;
+        velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
         collision = true;
     }
 
+    // Particle is to the left edge of the window
     if pos.translation.x < -1.0 * win_width / 2.0 {
         pos.translation.x = -1.0 * win_width / 2.0;
+        velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
         collision = true;
     }
 
+    // Particle is above the window
     if pos.translation.y > win_height / 2.0 {
         pos.translation.y = win_height / 2.0;
+        velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
         collision = true;
     }
 
+    // Particle is below the window.
     if pos.translation.y < -1.0 * win_height / 2.0 {
         pos.translation.y = -1.0 * win_height / 2.0;
+        velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
         collision = true;
     }
 
+    // If the particle went out of bounds, we reverse the direction of velocity.
     if collision {
-        velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
-        velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
+        // Placeholder
     }
 }
 
-/// Moves objects in the physics world
+/// Simulates the movement of particles.
 pub fn simulate(
     time: Res<Time>,
     gravity: Res<Gravity>,
     mut window: Query<&Window>,
     mut query: Query<(&mut Transform, &Mass, &mut Velocity)>,
 ) {
+    // Grab the time since the last frame.
     let delta_seconds = DELTA_TIME_MAX.max(time.delta_seconds());
+    // Grab the defined gravity constant.
     let gravity = gravity.into_inner();
-
+    // Grab every combination between particles.
     let mut combinations = query.iter_combinations_mut();
-
+    // Loop over every particle combination and apply a repelling force.
     while let Some([(mut pos, _mass, mut velocity), (mut other_pos, _, mut other_velocity)]) =
         combinations.fetch_next()
     {

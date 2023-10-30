@@ -23,6 +23,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, simulate)
+        .add_systems(Update, color_particle)
         .run();
 }
 

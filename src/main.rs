@@ -35,7 +35,7 @@ fn setup(
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
 
-    // PURPLE CIRCLES!!!
+    // Generate particles
     for y in -5..5 {
         for x in -25..25 {
             commands
@@ -51,7 +51,8 @@ fn setup(
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0),
                     color: (),
-                });
+                }
+            );
         }
     }
 }

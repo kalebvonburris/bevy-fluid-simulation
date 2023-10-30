@@ -114,9 +114,9 @@ fn border_collision(pos: &mut Transform, velocity: &mut Velocity, window: &Windo
     }
 }
 
-/// Clamps an f32 to be within (0, 1) for any value
-fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + (-x).exp())
+/// Clamps an f32 to be within [0, 1) for any value >= 0
+fn clamp_positive(x: f32) -> f32 {
+    1.0 - (-x).exp()
 }
 
 pub fn color_particle(
@@ -127,7 +127,7 @@ pub fn color_particle(
     for (entity, velocity) in query.iter() {
         if let Ok(material_handle) = color_handles.get(entity) {
             // Normalize the velocity vector. Larger values approach 1, smaller values approach 0
-            let absolute_velocity_normalized = sigmoid(velocity.vec.length() / 150.0);
+            let absolute_velocity_normalized = clamp_positive(velocity.vec.length() / 150.0);
             // Grab the ColorMaterial
             let material = color_assets.get_mut(material_handle).unwrap();
             // Apply the normalized velocity to the material color

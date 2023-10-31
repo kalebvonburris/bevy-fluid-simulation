@@ -9,15 +9,16 @@ const PARTICLE_DAMPENING_FACTOR: f32 = 0.65;
 //
 const SMOOTHING_RADIUS: f32 = 50.0;
 
-// Max 60fps.
+// Max 60fps for simulation step
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
 /* -- Imports -- */
 // Bevy imports
-use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window};
+use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window, render::render_resource::Texture};
 
 // rand for random number generation
-use rand::prelude::*;
+// not actually needed as an import
+// use rand::prelude::*;
 
 #[derive(Debug, Resource)]
 pub struct Gravity(Vec2);
@@ -145,7 +146,7 @@ pub fn color_particle(
 pub fn simulate(
     time: Res<Time>,
     gravity: Res<Gravity>,
-    mut window: Query<&Window>,
+    window: Query<&Window>,
     mut query: Query<(&mut Transform, &Mass, &mut Velocity)>,
 ) {
     // Grab the time since the last frame.
@@ -163,11 +164,7 @@ pub fn simulate(
             // Directional vector from pos to other_pos.
             let mut dir_vec = match (other_pos.translation - pos.translation).try_normalize() {
                 Some(x) => x,
-                None => Vec3::new(
-                    rand::random::<f32>(), 
-                    rand::random::<f32>(), 
-                    0.0
-                ).normalize(),
+                None => Vec3::new(rand::random::<f32>(), rand::random::<f32>(), 0.0).normalize(),
             };
             // The distance for each particle to move.
             let distance_to_move = (distance / 2.0) - 10.0;
@@ -189,7 +186,6 @@ pub fn simulate(
         if velocity.vec.is_nan() {
             velocity.vec[0] = 0.0;
             velocity.vec[1] = 0.0;
-            
         }
         // Reset the position if it's nan
         if pos.translation.is_nan() {
@@ -206,9 +202,17 @@ pub fn simulate(
         pos.translation.x += velocity.vec[0] * delta_seconds;
         pos.translation.y += velocity.vec[1] * delta_seconds;
 
-        // Check for collision
-        border_collision(&mut pos, &mut velocity, window.single_mut());
+        // Check for border collision
+        border_collision(&mut pos, &mut velocity, window.single());
     }
+}
+
+pub fn render_background(
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    window: Query<&Window>,
+) {
+
 }
 
 fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
@@ -221,17 +225,13 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
 
     let mut force = match (pos1.translation - pos2.translation).try_normalize() {
         Some(x) => x,
-        None => Vec3::new(
-            rand::random::<f32>(), 
-            rand::random::<f32>(), 
-            0.0
-        ).normalize(),
+        None => Vec3::new(rand::random::<f32>(), rand::random::<f32>(), 0.0).normalize(),
     };
 
     // Vector pointing from pos1 to pos2.
     // We normalize and then apply a force function
     // based on the distance between the particles.
-    force = force * (distance - SMOOTHING_RADIUS).powf(2.0);
+    force *= (distance - SMOOTHING_RADIUS).powf(2.0);
     // Reduce the force generated so we have
     // less chaotic particles.
     Vec2::new(force.x, force.y)

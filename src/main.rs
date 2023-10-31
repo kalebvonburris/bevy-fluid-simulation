@@ -9,12 +9,11 @@ use particle::*;
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
-    sprite::MaterialMesh2dBundle,
+    sprite::MaterialMesh2dBundle, render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
 fn main() {
     App::new()
-        .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
         .add_plugins(LogDiagnosticsPlugin::default())
@@ -31,7 +30,28 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    window: Query<&Window>,
 ) {
+    let window = window.single();
+    // Create background image
+    let size = Extent3d {
+        height: window.height() as u32,
+        width: window.width() as u32,
+        depth_or_array_layers: 1,
+    };
+
+
+    let mat = 
+
+
+    commands.spawn(
+        MaterialMesh2dBundle {
+            mesh: meshes.add(Mesh::from(shape::Box::default())).into(),
+            material: materials.add(Image::new_fill(size, TextureDimension::D2, &[0], TextureFormat)),
+            ..default()
+        }
+    );
+
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
 
@@ -51,8 +71,7 @@ fn setup(
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0),
                     color: (),
-                }
-            );
+                });
         }
     }
 }

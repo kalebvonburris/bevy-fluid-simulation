@@ -23,6 +23,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, simulate)
+        .add_systems(Update, color_particle)
         .run();
 }
 
@@ -34,8 +35,8 @@ fn setup(
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
 
-    // PURPLE CIRCLES!!!
-    for y in -5..5 {
+    // Generate particles
+    for y in -10..10 {
         for x in -25..25 {
             commands
                 .spawn(MaterialMesh2dBundle {
@@ -49,7 +50,9 @@ fn setup(
                     mass: Mass(1.0),
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0),
-                });
+                    color: (),
+                }
+            );
         }
     }
 }

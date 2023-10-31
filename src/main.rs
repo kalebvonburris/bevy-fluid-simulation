@@ -36,7 +36,7 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // Generate particles
-    for y in -5..5 {
+    for y in -10..10 {
         for x in -25..25 {
             commands
                 .spawn(MaterialMesh2dBundle {

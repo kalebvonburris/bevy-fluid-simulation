@@ -173,8 +173,8 @@ pub fn simulate(
             let distance_to_move = (distance / 2.0) - 10.0;
             // Move both particles.
             dir_vec *= distance_to_move;
-            pos.translation -= dir_vec;
-            other_pos.translation += dir_vec;
+            pos.translation += dir_vec;
+            other_pos.translation -= dir_vec;
         }
         // Apply fluid dispersion force.
         let force = calculate_force(&pos, &other_pos);

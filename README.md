@@ -2,9 +2,17 @@
 
 A fluid simulation written in Rust using the [Bevy](https://bevyengine.org/) game engine.
 
-## Requirements
+## Running
 
-### Rust
+### Compiled Binaries
+
+Download the relevant binary from the latest release and run the given executable.
+
+### Compiling Locally
+
+#### Requirements
+
+##### Rust
 
 Minimum version: 1.75.0 Nightly
 
@@ -12,7 +20,7 @@ It's recommended to install Rust via [Rustup](https://rustup.rs/).
 
 For Bevy specific requirements, see the [setup section of the Bevy book](https://bevyengine.org/learn/book/getting-started/setup/).
 
-## Running locally
+##### Running locally
 
 To run this project locally, clone this repository:
 

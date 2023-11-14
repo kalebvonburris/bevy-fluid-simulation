@@ -12,9 +12,14 @@ const SMOOTHING_RADIUS: f32 = 50.0;
 // Max 60fps for simulation step
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
+use std::f32::consts::PI;
+
 /* -- Imports -- */
 // Bevy imports
-use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window, render::render_resource::Texture};
+use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window};
+
+// Rayon for parallelism
+//use rayon::prelude::*;
 
 // rand for random number generation
 // not actually needed as an import
@@ -57,13 +62,13 @@ impl Default for CircleCollider {
 
 #[derive(Component, Debug)]
 pub struct Velocity {
-    pub vec: Vec2,
+    pub vec: Vec3,
 }
 
 impl Velocity {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            vec: Vec2::new(x, y),
+            vec: Vec3::new(x, y, z)
         }
     }
 }
@@ -71,10 +76,13 @@ impl Velocity {
 impl Default for Velocity {
     fn default() -> Self {
         Self {
-            vec: Vec2::new(0.0, 0.0),
+            vec: Vec3::new(0.0, 0.0, 0.0),
         }
     }
 }
+
+#[derive(Resource)]
+struct DensityMap {}
 
 #[derive(Default, Debug, Bundle)]
 pub struct ParticleBundle {
@@ -92,25 +100,25 @@ fn border_collision(pos: &mut Transform, velocity: &mut Velocity, window: &Windo
 
     // Particle is to the right edge of the window
     if pos.translation.x > win_width / 2.0 {
-        pos.translation.x = win_width / 2.0;
+        pos.translation.x = win_width / 2.0 - 5.0;
         velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is to the left edge of the window
     if pos.translation.x < -1.0 * win_width / 2.0 {
-        pos.translation.x = -1.0 * win_width / 2.0;
+        pos.translation.x = -1.0 * win_width / 2.0 + 5.0;
         velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is above the window
     if pos.translation.y > win_height / 2.0 {
-        pos.translation.y = win_height / 2.0;
+        pos.translation.y = win_height / 2.0 - 5.0;
         velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is below the window.
     if pos.translation.y < -1.0 * win_height / 2.0 {
-        pos.translation.y = -1.0 * win_height / 2.0;
+        pos.translation.y = -1.0 * win_height / 2.0 + 5.0;
         velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 }
@@ -170,8 +178,10 @@ pub fn simulate(
             let distance_to_move = (distance / 2.0) - 10.0;
             // Move both particles.
             dir_vec *= distance_to_move;
-            pos.translation += dir_vec;
-            other_pos.translation -= dir_vec;
+            
+            pos.translation += dir_vec * distance_to_move;
+
+            other_pos.translation -= dir_vec * distance_to_move;
         }
         // Apply fluid dispersion force.
         let force = calculate_force(&pos, &other_pos);
@@ -181,7 +191,7 @@ pub fn simulate(
         other_velocity.vec[1] -= force.y * delta_seconds / 2.0;
     }
 
-    for (mut pos, _, mut velocity) in query.iter_mut() {
+    for (mut pos, _, mut velocity) in &mut query {
         // Reset velocity if it's nan
         if velocity.vec.is_nan() {
             velocity.vec[0] = 0.0;
@@ -195,8 +205,8 @@ pub fn simulate(
         }
 
         // Apply gravity!
-        velocity.vec[0] += gravity.0[0] * delta_seconds;
-        velocity.vec[1] += gravity.0[1] * delta_seconds;
+        //velocity.vec[0] += gravity.0[0] * delta_seconds;
+        //velocity.vec[1] += gravity.0[1] * delta_seconds;
 
         // Move by the velocity we've stored.
         pos.translation.x += velocity.vec[0] * delta_seconds;
@@ -207,12 +217,19 @@ pub fn simulate(
     }
 }
 
-pub fn render_background(
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    window: Query<&Window>,
-) {
+//pub fn calculate_density_map(positions: Query<&Transform>, density_map: ResMut<DensityMap>) {
+//    let density = positions
+//        .iter()
+//        .map(|pos| {
+//            smoothing_kernel(20.0, (pos.translation -   .translation).length());
+//        })
+//        .sum();
+//}
 
+fn smoothing_kernel(radius: f32, distance: f32) -> f32 {
+    let vol = PI * radius.powf(8.0) / 4.0;
+    let val = 0.0_f32.max(radius * radius - distance * distance);
+    val * val * val / vol
 }
 
 fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {

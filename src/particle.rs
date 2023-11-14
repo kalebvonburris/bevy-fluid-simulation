@@ -1,4 +1,4 @@
-// particle.rs
+﻿// particle.rs
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
@@ -179,9 +179,8 @@ pub fn simulate(
             // Move both particles.
             dir_vec *= distance_to_move;
 
-            pos.translation += dir_vec * distance_to_move;
-
-            other_pos.translation -= dir_vec * distance_to_move;
+            pos.translation += dir_vec;
+            other_pos.translation -= dir_vec;
         }
         // Apply fluid dispersion force.
         let force = calculate_force(&pos, &other_pos);

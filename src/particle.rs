@@ -1,4 +1,4 @@
-﻿// particle.rs
+// particle.rs
 // Kaleb Burris
 // 10-12-2023
 // The necessary components to simulate fluid dynamics using particles.
@@ -12,7 +12,7 @@ const SMOOTHING_RADIUS: f32 = 50.0;
 // Max 60fps for simulation step
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
-use std::f32::consts::PI;
+//use std::f32::consts::PI;
 
 /* -- Imports -- */
 // Bevy imports
@@ -68,7 +68,7 @@ pub struct Velocity {
 impl Velocity {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            vec: Vec3::new(x, y, z)
+            vec: Vec3::new(x, y, z),
         }
     }
 }
@@ -153,14 +153,14 @@ pub fn color_particle(
 /// Simulates the movement of particles.
 pub fn simulate(
     time: Res<Time>,
-    gravity: Res<Gravity>,
+    //gravity: Res<Gravity>,
     window: Query<&Window>,
     mut query: Query<(&mut Transform, &Mass, &mut Velocity)>,
 ) {
     // Grab the time since the last frame.
     let delta_seconds = DELTA_TIME_MAX.max(time.delta_seconds());
     // Grab the defined gravity constant.
-    let gravity = gravity.into_inner();
+    //let gravity = gravity.into_inner();
     // Grab every combination between particles.
     let mut combinations = query.iter_combinations_mut();
     // Loop over every particle combination and apply a repelling force.
@@ -178,7 +178,7 @@ pub fn simulate(
             let distance_to_move = (distance / 2.0) - 10.0;
             // Move both particles.
             dir_vec *= distance_to_move;
-            
+
             pos.translation += dir_vec * distance_to_move;
 
             other_pos.translation -= dir_vec * distance_to_move;
@@ -226,11 +226,11 @@ pub fn simulate(
 //        .sum();
 //}
 
-fn smoothing_kernel(radius: f32, distance: f32) -> f32 {
-    let vol = PI * radius.powf(8.0) / 4.0;
-    let val = 0.0_f32.max(radius * radius - distance * distance);
-    val * val * val / vol
-}
+//fn smoothing_kernel(radius: f32, distance: f32) -> f32 {
+//    let vol = PI * radius.powf(8.0) / 4.0;
+//    let val = 0.0_f32.max(radius * radius - distance * distance);
+//    val * val * val / vol
+//}
 
 fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     let distance = (pos2.translation - pos1.translation).length();

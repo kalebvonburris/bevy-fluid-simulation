@@ -32,7 +32,6 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    window: Query<&Window>,
 ) {
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());

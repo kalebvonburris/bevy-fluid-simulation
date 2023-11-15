@@ -1,4 +1,4 @@
-﻿# Thanks to https://github.com/NiklasEi/bevy_game_template/blob/main/.github/workflows/release.yaml for much of this code
+﻿# Thanks to https://gith ub.com/NiklasEi/bevy_game_template/blob/main/.github/workflows/release.yaml for much of this code
 on:
     push:
       # Sequence of patterns matched against refs/tags
@@ -50,6 +50,7 @@ jobs:
         id: create_release
         continue-on-error: true
         uses: actions/create-release@v1
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:

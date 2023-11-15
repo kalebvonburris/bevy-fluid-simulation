@@ -46,7 +46,7 @@ jobs:
         run: |
           cargo install git-cliff
           git cliff -o CHANGELOG.md
-      - name: Create Release
+      - name: Create release
         id: create_release
         continue-on-error: true
         uses: actions/create-release@v1

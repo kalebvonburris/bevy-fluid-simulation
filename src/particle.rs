@@ -6,18 +6,25 @@
 // The amount of velocity lost on a collision.
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.65;
 
-//
+// Smoothing radius for smoothing kernel.
+// Defines how far from a point we consider for particle interactions.
 const SMOOTHING_RADIUS: f32 = 50.0;
 
-// Max 60fps.
+// Max 60fps for simulation step
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
+
+// use std::f32::consts::PI;
 
 /* -- Imports -- */
 // Bevy imports
 use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window};
 
+// Rayon for parallelism
+// use rayon::prelude::*;
+
 // rand for random number generation
-use rand::prelude::*;
+// not actually needed as an import
+// use rand::prelude::*;
 
 #[derive(Debug, Resource)]
 pub struct Gravity(Vec2);
@@ -56,13 +63,13 @@ impl Default for CircleCollider {
 
 #[derive(Component, Debug)]
 pub struct Velocity {
-    pub vec: Vec2,
+    pub vec: Vec3,
 }
 
 impl Velocity {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self {
-            vec: Vec2::new(x, y),
+            vec: Vec3::new(x, y, z),
         }
     }
 }
@@ -70,10 +77,13 @@ impl Velocity {
 impl Default for Velocity {
     fn default() -> Self {
         Self {
-            vec: Vec2::new(0.0, 0.0),
+            vec: Vec3::new(0.0, 0.0, 0.0),
         }
     }
 }
+
+#[derive(Resource)]
+struct DensityMap {}
 
 #[derive(Default, Debug, Bundle)]
 pub struct ParticleBundle {
@@ -91,25 +101,25 @@ fn border_collision(pos: &mut Transform, velocity: &mut Velocity, window: &Windo
 
     // Particle is to the right edge of the window
     if pos.translation.x > win_width / 2.0 {
-        pos.translation.x = win_width / 2.0;
+        pos.translation.x = win_width / 2.0 - 5.0;
         velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is to the left edge of the window
     if pos.translation.x < -1.0 * win_width / 2.0 {
-        pos.translation.x = -1.0 * win_width / 2.0;
+        pos.translation.x = -1.0 * win_width / 2.0 + 5.0;
         velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is above the window
     if pos.translation.y > win_height / 2.0 {
-        pos.translation.y = win_height / 2.0;
+        pos.translation.y = win_height / 2.0 - 5.0;
         velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is below the window.
     if pos.translation.y < -1.0 * win_height / 2.0 {
-        pos.translation.y = -1.0 * win_height / 2.0;
+        pos.translation.y = -1.0 * win_height / 2.0 + 5.0;
         velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 }
@@ -144,14 +154,14 @@ pub fn color_particle(
 /// Simulates the movement of particles.
 pub fn simulate(
     time: Res<Time>,
-    gravity: Res<Gravity>,
-    mut window: Query<&Window>,
+    //gravity: Res<Gravity>,
+    window: Query<&Window>,
     mut query: Query<(&mut Transform, &Mass, &mut Velocity)>,
 ) {
     // Grab the time since the last frame.
     let delta_seconds = DELTA_TIME_MAX.max(time.delta_seconds());
     // Grab the defined gravity constant.
-    let gravity = gravity.into_inner();
+    //let gravity = gravity.into_inner();
     // Grab every combination between particles.
     let mut combinations = query.iter_combinations_mut();
     // Loop over every particle combination and apply a repelling force.
@@ -163,16 +173,13 @@ pub fn simulate(
             // Directional vector from pos to other_pos.
             let mut dir_vec = match (other_pos.translation - pos.translation).try_normalize() {
                 Some(x) => x,
-                None => Vec3::new(
-                    rand::random::<f32>(), 
-                    rand::random::<f32>(), 
-                    0.0
-                ).normalize(),
+                None => Vec3::new(rand::random::<f32>(), rand::random::<f32>(), 0.0).normalize(),
             };
             // The distance for each particle to move.
             let distance_to_move = (distance / 2.0) - 10.0;
             // Move both particles.
             dir_vec *= distance_to_move;
+
             pos.translation += dir_vec;
             other_pos.translation -= dir_vec;
         }
@@ -184,12 +191,11 @@ pub fn simulate(
         other_velocity.vec[1] -= force.y * delta_seconds / 2.0;
     }
 
-    for (mut pos, _, mut velocity) in query.iter_mut() {
+    for (mut pos, _, mut velocity) in &mut query {
         // Reset velocity if it's nan
         if velocity.vec.is_nan() {
             velocity.vec[0] = 0.0;
             velocity.vec[1] = 0.0;
-            
         }
         // Reset the position if it's nan
         if pos.translation.is_nan() {
@@ -199,17 +205,32 @@ pub fn simulate(
         }
 
         // Apply gravity!
-        velocity.vec[0] += gravity.0[0] * delta_seconds;
-        velocity.vec[1] += gravity.0[1] * delta_seconds;
+        //velocity.vec[0] += gravity.0[0] * delta_seconds;
+        //velocity.vec[1] += gravity.0[1] * delta_seconds;
 
         // Move by the velocity we've stored.
         pos.translation.x += velocity.vec[0] * delta_seconds;
         pos.translation.y += velocity.vec[1] * delta_seconds;
 
-        // Check for collision
-        border_collision(&mut pos, &mut velocity, window.single_mut());
+        // Check for border collision
+        border_collision(&mut pos, &mut velocity, window.single());
     }
 }
+
+//pub fn calculate_density_map(positions: Query<&Transform>, density_map: ResMut<DensityMap>) {
+//    let density = positions
+//        .iter()
+//        .map(|pos| {
+//            smoothing_kernel(20.0, (pos.translation -   .translation).length());
+//        })
+//        .sum();
+//}
+
+//fn smoothing_kernel(radius: f32, distance: f32) -> f32 {
+//    let vol = PI * radius.powf(8.0) / 4.0;
+//    let val = 0.0_f32.max(radius * radius - distance * distance);
+//    val * val * val / vol
+//}
 
 fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     let distance = (pos2.translation - pos1.translation).length();
@@ -221,17 +242,13 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
 
     let mut force = match (pos1.translation - pos2.translation).try_normalize() {
         Some(x) => x,
-        None => Vec3::new(
-            rand::random::<f32>(), 
-            rand::random::<f32>(), 
-            0.0
-        ).normalize(),
+        None => Vec3::new(rand::random::<f32>(), rand::random::<f32>(), 0.0).normalize(),
     };
 
     // Vector pointing from pos1 to pos2.
     // We normalize and then apply a force function
     // based on the distance between the particles.
-    force = force * (distance - SMOOTHING_RADIUS).powf(2.0);
+    force *= (distance - SMOOTHING_RADIUS).powf(2.0);
     // Reduce the force generated so we have
     // less chaotic particles.
     Vec2::new(force.x, force.y)

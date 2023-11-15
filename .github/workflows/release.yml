@@ -50,7 +50,7 @@ jobs:
         zip -j aarch64-apple-darwin.zip target/aarch64-apple-darwin/release/bevy-fluid-simulation*
     - name: Create changelog
       run: |
-        git cliff --current -o CHANGELOG.md
+        git cliff -o CHANGELOG.md
     - name: Zip together release files
       run: |
         zip release.zip CHANGELOG.md *.zip

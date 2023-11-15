@@ -180,7 +180,7 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: ${{ env.GAME_EXECUTABLE_NAME }}_windows.zip
         asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_${{ env.VERSION }}_windows.zip
-        tag: ${{ github.ref }}
+        tag: ${{ env.VERSION }}
         overwrite: true
 
   #build-web:

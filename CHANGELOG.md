@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### Bug Fixes
+
+- Workflow modifications
+- Release tag fix
+- Add build files for release
+
+### Features
+
+- Remove cross for now
+
 ## [0.0.1] - 2023-11-15
 
 ### Bug Fixes

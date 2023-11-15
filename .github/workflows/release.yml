@@ -1,4 +1,4 @@
-﻿# Thanks to https://gith ub.com/NiklasEi/bevy_game_template/blob/main/.github/workflows/release.yaml for much of this code
+﻿# Thanks to https://github.com/NiklasEi/bevy_game_template/blob/main/.github/workflows/release.yaml for much of this code
 on:
     push:
       # Sequence of patterns matched against refs/tags
@@ -161,32 +161,19 @@ jobs:
     needs: [get-version, create-release]
     env:
       VERSION: ${{needs.get-version.outputs.version}}
-      BUILD_INSTALLER: false
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
     - name: Install rust toolchain
       uses: actions-rust-lang/setup-rust-toolchain@v1
-    - name: Install dotnet
-      if: ${{ env.BUILD_INSTALLER }}
-      uses: actions/setup-dotnet@v3
-      with:
-        global-json-file: build/windows/installer/global.json
     - name: Build release
       run: |
         cargo build --release
-    - name: Prepare release
-      run: |
-        mkdir target/release/assets && cp -r assets target/release/assets
-        mkdir target/release/credits && cp -r credits target/release/credits
     - name: Zip release
       uses: vimtor/action-zip@v1
       with:
         files: target/release/assets/ target/release/credits/ target/release/${{ env.GAME_EXECUTABLE_NAME }}.exe
         dest: ${{ env.GAME_EXECUTABLE_NAME }}_windows.zip
-    - name: Create Installer
-      if: ${{ env.BUILD_INSTALLER }}
-      run: dotnet build -p:Version=1.2.3 -c Release build/windows/installer/Installer.wixproj --output installer
     - name: Upload release
       uses: svenstaro/upload-release-action@v2
       with:
@@ -195,65 +182,60 @@ jobs:
         asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_${{ env.VERSION }}_windows.zip
         tag: ${{ github.ref }}
         overwrite: true
-    - name: Upload installer
-      if: ${{ env.BUILD_INSTALLER }}
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: installer/en-US/installer.msi
-        asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_${{ steps.tag.outputs.tag }}_windows.msi
-        release_name: ${{ env.VERSION }}
-        tag: ${{ env.VERSION }}
-        overwrite: true
 
-  build-web:
-    runs-on: ubuntu-latest
-    needs: [get-version, create-release]
-    env:
-      VERSION: ${{needs.get-version.outputs.version}}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Install rust toolchain
-      uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: stable
-    - name: Install Dependencies
-      run: sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev
-    - name: Install trunk
-      uses: jetli/trunk-action@v0.1.0
-      with:
-        version: latest
-    - name: Add wasm target
-      run: |
-        rustup target add wasm32-unknown-unknown
-    - name: Build Release
-      run: |
-        trunk build --release
-    - name: Optimize Wasm
-      uses: NiklasEi/wasm-opt-action@v2
-      with:
-        file: dist/*.wasm
-      # Trunk cannot import assets from relative paths (see e.g. https://github.com/thedodd/trunk/issues/395)
-      # On sites like itch.io, we don't know on which base path the game gets served, so we need to rewrite all links to be relative
-    - name: Make paths relative
-      run: |
-        sed -i 's/\/index/.\/index/g' dist/index.html
-        sed -i 's/\/${{ env.GAME_EXECUTABLE_NAME }}/.\/${{ env.GAME_EXECUTABLE_NAME }}/g' dist/index.html
-    - name: Zip release
-      uses: vimtor/action-zip@v1
-      with:
-        files: dist/
-        dest: ${{ env.GAME_EXECUTABLE_NAME }}_web.zip
-    - name: Upload release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ env.GAME_EXECUTABLE_NAME }}_web.zip
-        asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_${{ env.VERSION }}_web.zip
-        release_name: ${{ env.VERSION }}
-        tag: ${{ env.VERSION }}
-        overwrite: true
+  #build-web:
+  #  runs-on: ubuntu-latest
+  #  needs: [get-version, create-release]
+  #  env:
+  #    VERSION: ${{needs.get-version.outputs.version}}
+  #  steps:
+  #  - name: Checkout repository
+  #    uses: actions/checkout@v3
+  #  - name: Install rust toolchain
+  #    uses: actions-rust-lang/setup-rust-toolchain@v1
+  #    with:
+  #      toolchain: stable
+  #  - name: Install Dependencies
+  #    run: sudo apt-get update; sudo apt-get install -y pkg-config libx11-dev libasound2-dev libudev-dev
+  #  - name: Install trunk
+  #    uses: jetli/trunk-action@v0.1.0
+  #    with:
+  #      version: latest
+  #  - name: Add wasm target
+  #    run: |
+  #      rustup target add wasm32-unknown-unknown
+  #  - name: Build Release
+  #    run: |
+  #      trunk build --release
+  #  - name: Optimize Wasm
+  #    uses: NiklasEi/wasm-opt-action@v2
+  #    with:
+  #      file: dist/*.wasm
+  #    # Trunk cannot import assets from relative paths (see e.g. https://github.com/thedodd/trunk/issues/395)
+  #    # On sites like itch.io, we don't know on which base path the game gets served, so we need to rewrite all links to be relative
+  #  #- name: Make paths relative
+  #  #  run: |
+  #  #    sed -i 's/\/index/.\/index/g' dist/index.html
+  #  #    sed -i 's/\/${{ env.GAME_EXECUTABLE_NAME }}/.\/${{ env.GAME_EXECUTABLE_NAME }}/g' dist/index.html
+  #  - name: wasm-bindgen
+  #    run: |
+  #      cargo install wasm-bindgen-cli
+  #      mkdir out
+  #      wasm-bindgen --out-dir out --target web target
+  #  - name: Zip release
+  #    uses: vimtor/action-zip@v1
+  #    with:
+  #      files: out/
+  #      dest: ${{ env.GAME_EXECUTABLE_NAME }}_web.zip
+  #  - name: Upload release
+  #    uses: svenstaro/upload-release-action@v2
+  #    with:
+  #      repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #      file: ${{ env.GAME_EXECUTABLE_NAME }}_web.zip
+  #      asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_${{ env.VERSION }}_web.zip
+  #      release_name: ${{ env.VERSION }}
+  #      tag: ${{ env.VERSION }}
+  #      overwrite: true
 
 # Interesting ideas for the future...
 #  build-for-iOS:

@@ -1,0 +1,16 @@
+﻿[build]
+xargo = false
+
+# Build targets for cross
+[target.aarch64-unknown-linux-gnu]
+pre-build = ["apt-get update && apt-get install -y g++ pkg-config libx11-dev libasound2-dev libudev-dev"]
+#image = "arm64v8/ubuntu"
+
+[target.x86_64-unknown-linux-gnu]
+pre-build = ["apt-get update && apt-get install -y g++ pkg-config libx11-dev libasound2-dev libudev-dev"]
+
+[target.x86_64-apple-darwin]
+pre-build = ["xcode-select --install"]
+
+[target.aarch64-apple-darwin]
+pre-build = ["xcode-select --install"]

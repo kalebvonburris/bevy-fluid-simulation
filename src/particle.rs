@@ -6,20 +6,21 @@
 // The amount of velocity lost on a collision.
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.65;
 
-//
+// Smoothing radius for smoothing kernel.
+// Defines how far from a point we consider for particle interactions.
 const SMOOTHING_RADIUS: f32 = 50.0;
 
 // Max 60fps for simulation step
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
-//use std::f32::consts::PI;
+// use std::f32::consts::PI;
 
 /* -- Imports -- */
 // Bevy imports
 use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window};
 
 // Rayon for parallelism
-//use rayon::prelude::*;
+// use rayon::prelude::*;
 
 // rand for random number generation
 // not actually needed as an import

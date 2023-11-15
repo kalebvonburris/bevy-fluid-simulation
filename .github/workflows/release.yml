@@ -3,58 +3,74 @@
       # Sequence of patterns matched against refs/tags
       tags:
         - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-  
-  name: Create Release
-  
-  jobs:
-    build:
-      name: Create Release
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
-        - name: Set up cargo cache
-          uses: actions/cache@v3
-          continue-on-error: false
-          with:
-            path: |
-              ~/.cargo/bin/
-              ~/.cargo/registry/index/
-              ~/.cargo/registry/cache/
-              ~/.cargo/git/db/
-              target/
-        - name: Create Binaries
-          run: |
-            cd target
-            rustup target add x86_64-unknown-linux-gnu
-            rustup target add x86_64-pc-windows-msvc
-            rustup target add aarch64-unknown-linux-gnu
-            rustup target add x86_64-apple-darwin
-            cargo build --release --target x86_64-unknown-linux-gnu
-            zip x86_64-unknown-linux-gnu/release/bevy-fluid-simulation*
-            cargo build --release --target x86_64-pc-windows-msvc
-            cargo build --release --target aarch64-unknown-linux-gnu
-            cargo build --release --target x86_64-apple-darwin
-        - name: Create changelog
-          run: |
-            git cliff --current -o CHANGELOG.md
-        - name: Create Release
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-          with:
-            tag_name: ${{ github.ref }}
-            release_name: Release ${{ github.ref }}
-            draft: false
-            prerelease: false
-        - name: Upload Release Asset
-          id: upload-release-asset 
-          uses: actions/upload-release-asset@v1
-          env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-              upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-              asset_path: ./release.zip
-              asset_name: release.zip
-              asset_content_type: application/zip
+
+name: Create Release
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up cargo cache
+      uses: actions/cache@v3
+      continue-on-error: false
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        override: true
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        rustup target add x86_64-unknown-linux-gnu
+        rustup target add x86_64-pc-windows-gnu
+        rustup target add aarch64-unknown-linux-gnu
+        rustup target add x86_64-apple-darwin
+        rustup target add aarch64-apple-darwin
+        cargo install cross
+    - name: Create Binaries
+      run: |
+        cross build --release --target x86_64-unknown-linux-gnu
+        zip -j x86_64-unknown-linux-gnu.zip target/x86_64-unknown-linux-gnu/release/bevy-fluid-simulation
+        cross build --release --target x86_64-pc-windows-gnu
+        zip -j x86_64-pc-windows-gnu.zip target/x86_64-pc-windows-gnu/release/bevy-fluid-simulation.exe
+        cross build --release --target aarch64-unknown-linux-gnu
+        zip -j aarch64-unknown-linux-gnu.zip target/aarch64-unknown-linux-gnu/release/bevy-fluid-simulation
+        cross build --release --target x86_64-apple-darwin
+        zip -j x86_64-apple-darwin.zip target/x86_64-apple-darwin/release/bevy-fluid-simulation*
+        cross build --release --target aarch64-apple-darwin
+        zip -j aarch64-apple-darwin.zip target/aarch64-apple-darwin/release/bevy-fluid-simulation*
+    - name: Create changelog
+      run: |
+        git cliff --current -o CHANGELOG.md
+    - name: Zip together release files
+      run: |
+        zip release.zip CHANGELOG.md *.zip
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./release.zip
+        asset_name: release.zip
+        asset_content_type: application/zip

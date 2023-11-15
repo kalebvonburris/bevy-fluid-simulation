@@ -1,6 +1,8 @@
 ﻿# Thanks to https://github.com/NiklasEi/bevy_game_template/blob/main/.github/workflows/release.yaml for much of this code
 on:
     push:
+      branches:
+        - main
       # Sequence of patterns matched against refs/tags
       tags:
         - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
@@ -55,18 +57,9 @@ jobs:
         with:
           tag_name: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
+          body_path: CHANGELOG.md
           draft: false
           prerelease: false
-      - name: Upload changelog
-        id: upload-changelog
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: CHANGELOG.md
-          asset_name: CHANGELOG_${{ env.VERSION }}.md
-          release_name: ${{ env.VERSION }}
-          tag: ${{ env.VERSION }}
-          overwrite: true
 
   build-macOS:
     runs-on: macos-latest

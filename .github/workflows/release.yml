@@ -48,7 +48,6 @@ jobs:
           git cliff -o CHANGELOG.md
       - name: Create release
         id: create_release
-        continue-on-error: true
         uses: actions/create-release@v1
         continue-on-error: true
         env:

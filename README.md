@@ -14,7 +14,8 @@ Download the relevant binary from the [latest release](https://github.com/kalebv
 
 ##### Rust
 
-Minimum version: 1.75.0 Nightly
+Minimum version: 1.76.0 Nightly
+*The toolchain is specified to be Nightly in this project automatically.*
 
 It's recommended to install Rust via [Rustup](https://rustup.rs/).
 

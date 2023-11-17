@@ -6,7 +6,7 @@ A fluid simulation written in Rust using the [Bevy](https://bevyengine.org/) gam
 
 ### Compiled Binaries
 
-Download the relevant binary from the latest release and run the given executable.
+Download the relevant binary from the [latest release](https://github.com/kalebvonburris/bevy-fluid-simulation/releases/latest) and run the given executable.
 
 ### Compiling Locally
 

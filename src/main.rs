@@ -7,7 +7,6 @@ mod particle;
 use particle::*;
 
 use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
     sprite::MaterialMesh2dBundle,
 };
@@ -19,7 +18,6 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
-        .add_plugins(FpsCounterPlugin)
         .init_resource::<Gravity>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)

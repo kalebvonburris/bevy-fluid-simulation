@@ -25,6 +25,10 @@ strip = true
 panic = 'abort'
 lto = "thin"
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
 opt-level = 3

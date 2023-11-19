@@ -6,7 +6,7 @@ A fluid simulation written in Rust using the [Bevy](https://bevyengine.org/) gam
 
 ### Compiled Binaries
 
-Download the relevant binary from the latest release and run the given executable.
+Download the relevant binary from the [latest release](https://github.com/kalebvonburris/bevy-fluid-simulation/releases/latest) and run the given executable.
 
 ### Compiling Locally
 
@@ -14,7 +14,8 @@ Download the relevant binary from the latest release and run the given executabl
 
 ##### Rust
 
-Minimum version: 1.75.0 Nightly
+Minimum version: 1.76.0 Nightly
+*The toolchain is specified to be Nightly in this project automatically.*
 
 It's recommended to install Rust via [Rustup](https://rustup.rs/).
 

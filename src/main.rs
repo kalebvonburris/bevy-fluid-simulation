@@ -6,19 +6,16 @@
 mod particle;
 use particle::*;
 
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+
+#[windows_subsystem = "windows"]
 
 fn main() {
+    // Removes the cmd window when running
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
-        .add_plugins(LogDiagnosticsPlugin::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin)
         .init_resource::<Gravity>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
@@ -51,7 +48,6 @@ fn setup(
                     mass: Mass(1.0),
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0, 0.0),
-                    color: (),
                 });
         }
     }

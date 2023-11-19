@@ -26,10 +26,14 @@ permissions:
 name: Create release
 jobs:
   get-version:
-    name: 'Get tag'
-    uses: "WyriHaximus/github-action-get-previous-tag@v1"
-    with:
-      fallback: 1.0.0
+    name: Get version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+    outputs:
+      version: ${{ inputs.version || steps.tag.outputs.tag }}
 
   create-release:
     name: Create release

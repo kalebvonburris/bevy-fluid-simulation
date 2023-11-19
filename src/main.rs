@@ -6,14 +6,12 @@
 mod particle;
 use particle::*;
 
-use bevy::{
-    prelude::*,
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+
+#[windows_subsystem = "windows"]
 
 fn main() {
     // Removes the cmd window when running
-    #[windows_subsystem = "windows"]
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Sample4)

@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Get tag
         id: tag
-        run: echo "tag=${GITHUB_REF#refs/*/}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${GITHUB_REF#refs/tags/*}" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ inputs.version || steps.tag.outputs.tag }}
 

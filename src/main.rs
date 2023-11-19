@@ -3,12 +3,13 @@
 // 10-12-2023
 // The code containing the application startup for `bevy-fluid-simulation`.
 
+// Removes the command window from Windows
+#![windows_subsystem = "windows"]
+
 mod particle;
 use particle::*;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
-
-#[windows_subsystem = "windows"]
 
 fn main() {
     // Removes the cmd window when running

@@ -91,7 +91,6 @@ pub struct ParticleBundle {
     pub mass: Mass,
     pub collider: CircleCollider,
     pub velocity: Velocity,
-    pub color: (), // TODO: Apply color to particles based on absolute velocity.
 }
 
 /// Detects if a particle is outside of the window, reverses it velocity, and moves it back into the window.
@@ -100,25 +99,25 @@ fn border_collision(pos: &mut Transform, velocity: &mut Velocity, window: &Windo
     let win_height = window.height();
 
     // Particle is to the right edge of the window
-    if pos.translation.x > win_width / 2.0 {
+    if pos.translation.x > win_width / 2.0 - 5.0 {
         pos.translation.x = win_width / 2.0 - 5.0;
         velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is to the left edge of the window
-    if pos.translation.x < -1.0 * win_width / 2.0 {
+    if pos.translation.x < -1.0 * win_width / 2.0 + 5.0 {
         pos.translation.x = -1.0 * win_width / 2.0 + 5.0;
         velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is above the window
-    if pos.translation.y > win_height / 2.0 {
+    if pos.translation.y > win_height / 2.0 - 5.0 {
         pos.translation.y = win_height / 2.0 - 5.0;
         velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is below the window.
-    if pos.translation.y < -1.0 * win_height / 2.0 {
+    if pos.translation.y < -1.0 * win_height / 2.0 + 5.0 {
         pos.translation.y = -1.0 * win_height / 2.0 + 5.0;
         velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }

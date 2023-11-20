@@ -26,7 +26,6 @@ permissions:
 name: Create release
 jobs:
   get-version:
-    name: Get version
     runs-on: ubuntu-latest
     steps:
       - name: Get tag

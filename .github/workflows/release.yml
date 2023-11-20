@@ -31,14 +31,12 @@ jobs:
     steps:
       - name: Get tag
         id: tag
-        run: |
-          echo ${GITHUB_REF#refs/tags/}
-          echo ${GITHUB_REF#refs/*/}
-          echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
     outputs:
       version: ${{ inputs.version || steps.tag.outputs.tag }}
 
   create-release:
+    permissions: write-all
     name: Create release
     runs-on: ubuntu-latest
     needs: get-version

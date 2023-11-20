@@ -48,6 +48,7 @@ jobs:
       - name: Git cliff
         run: |
           cargo install git-cliff
+          git cliff
           git cliff -o CHANGELOG.md
       - name: Create release
         id: create_release

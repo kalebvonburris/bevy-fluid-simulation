@@ -21,8 +21,7 @@ env:
   GAME_OSX_APP_NAME: BevyFluidSim
 
 
-permissions:
-  contents: read
+permissions: write-all
 
 name: Create release
 jobs:

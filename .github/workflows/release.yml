@@ -20,8 +20,9 @@ env:
   GAME_EXECUTABLE_NAME: bevy-fluid-simulation
   GAME_OSX_APP_NAME: BevyFluidSim
 
+
 permissions:
-  contents: write
+  contents: read
 
 name: Create release
 jobs:
@@ -35,7 +36,6 @@ jobs:
       version: ${{ inputs.version || steps.tag.outputs.tag }}
 
   create-release:
-    permissions: write-all
     name: Create release
     runs-on: ubuntu-latest
     needs: get-version

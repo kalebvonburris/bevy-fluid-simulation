@@ -10,6 +10,7 @@ mod particle;
 use particle::*;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 fn main() {
     // Removes the cmd window when running
@@ -17,6 +18,8 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
+        .add_plugins(LogDiagnosticsPlugin::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .init_resource::<Gravity>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)

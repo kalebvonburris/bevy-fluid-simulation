@@ -190,7 +190,7 @@ pub fn simulate(
         other_velocity.vec[1] -= force.y * delta_seconds / 2.0;
     }
 
-    for (mut pos, _, mut velocity) in &mut query {
+    query.par_iter_mut().for_each( |(mut pos, _, mut velocity)| {
         // Reset velocity if it's nan
         if velocity.vec.is_nan() {
             velocity.vec[0] = 0.0;
@@ -213,7 +213,7 @@ pub fn simulate(
 
         // Check for border collision
         border_collision(&mut pos, &mut velocity, window.single());
-    }
+    });
 }
 
 //pub fn calculate_density_map(positions: Query<&Transform>, density_map: ResMut<DensityMap>) {

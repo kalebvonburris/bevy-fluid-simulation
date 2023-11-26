@@ -3,12 +3,14 @@
 // 10-12-2023
 // The code containing the application startup for `bevy-fluid-simulation`.
 
+#![windows_subsystem = "windows"]
+
 mod particle;
 use particle::*;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
-#[windows_subsystem = "windows"]
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 fn main() {
     // Removes the cmd window when running
@@ -16,6 +18,8 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
+        .add_plugins(LogDiagnosticsPlugin::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
         .init_resource::<Gravity>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
@@ -35,7 +39,7 @@ fn setup(
 
     // Generate particles
     for y in -10..10 {
-        for x in -50..50 {
+        for x in -30..30 {
             commands
                 .spawn(MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),

@@ -152,52 +152,79 @@ pub fn color_particle(
 
 /// Simulates the movement of particles.
 pub fn simulate(
-    time: Res<Time>,
     //gravity: Res<Gravity>,
     window: Query<&Window>,
-    mut query: Query<(&mut Transform, &Mass, &mut Velocity)>,
+    mut query: Query<(&mut Transform, &mut Velocity, &CircleCollider)>,
 ) {
     // Grab the time since the last frame.
-    let delta_seconds = DELTA_TIME_MAX.max(time.delta_seconds());
+    let delta_seconds = DELTA_TIME_MAX;
     // Grab the defined gravity constant.
     //let gravity = gravity.into_inner();
     // Grab every combination between particles.
     let mut combinations = query.iter_combinations_mut();
     // Loop over every particle combination and apply a repelling force.
-    while let Some([(mut pos, _mass, mut velocity), (mut other_pos, _, mut other_velocity)]) =
-        combinations.fetch_next()
+    while let Some(
+        [(pos, mut velocity, collider), (other_pos, mut other_velocity, other_collider)],
+    ) = combinations.fetch_next()
     {
-        let distance = (other_pos.translation - pos.translation).length();
-        if distance < 10.0 {
-            // Directional vector from pos to other_pos.
-            let mut dir_vec = match (other_pos.translation - pos.translation).try_normalize() {
-                Some(x) => x,
-                None => Vec3::new(rand::random::<f32>(), rand::random::<f32>(), 0.0).normalize(),
-            };
-            // The distance for each particle to move.
-            let distance_to_move = (distance / 2.0) - 10.0;
-            // Move both particles.
-            dir_vec *= distance_to_move;
-
-            pos.translation += dir_vec;
-            other_pos.translation -= dir_vec;
-        }
         // Apply fluid dispersion force.
         let force = calculate_force(&pos, &other_pos);
         velocity.vec[0] += force.x * delta_seconds / 2.0;
         velocity.vec[1] += force.y * delta_seconds / 2.0;
         other_velocity.vec[0] -= force.x * delta_seconds / 2.0;
         other_velocity.vec[1] -= force.y * delta_seconds / 2.0;
+
+        /*let diff_pos = pos.translation - other_pos.translation;
+        let distance = diff_pos.length();
+        if distance < (collider.radius + other_collider.radius) / 2.0 {
+            let m1 = collider.radius.powf(2.0);
+            let m2 = other_collider.radius.powf(2.0);
+
+            let M = m1 + m2;
+
+            let diff_velocity = velocity.vec - other_velocity.vec;
+
+            let d = diff_pos.length().powf(2.0);
+
+            let mut u1 =
+                velocity.vec - (m2 * 2.0 / M) * ((diff_velocity).dot(diff_pos) / d * diff_pos);
+
+            
+            if !u1.x.is_normal() { u1.x = 0.0; }
+            if !u1.y.is_normal() { u1.y = 0.0; }
+            if !u1.z.is_normal() { u1.z = 0.0; }
+            
+
+            let mut u2 = 
+                other_velocity.vec - (m1 * 2.0 / M) * (-(diff_velocity).dot(diff_pos) / d * -diff_pos);
+
+            
+            if !u2.x.is_normal() { u2.x = 0.0; }
+            if !u2.y.is_normal() { u2.y = 0.0; }
+            if !u2.z.is_normal() { u2.z = 0.0; }
+            
+
+            /*println!(
+                "p:{:?} op{:?} v:{:?} ov:{:?} dp:{:?} m1:{:?} m2:{:?} dv:{:?} M:{:?} u1:{:?} u2:{:?} d:{d:?}",
+                &pos.translation, &other_pos.translation, &velocity.vec, &other_velocity.vec, &diff_pos, &m1, &m2, &diff_velocity, &M, &u1, &u2
+            );*/
+
+            velocity.vec = u1;
+            other_velocity.vec = u2;
+        }*/
     }
 
-    for (mut pos, _, mut velocity) in &mut query {
+    for (mut pos, mut velocity, _) in &mut query {
         // Reset velocity if it's nan
         if velocity.vec.is_nan() {
+            println!("Found a NaN velocity");
             velocity.vec[0] = 0.0;
             velocity.vec[1] = 0.0;
+            velocity.vec[2] = 0.0;
         }
         // Reset the position if it's nan
         if pos.translation.is_nan() {
+            println!("Found a NaN position");
             pos.translation.x = 0.0;
             pos.translation.y = 0.0;
             pos.translation.z = 0.0;
@@ -215,6 +242,8 @@ pub fn simulate(
         border_collision(&mut pos, &mut velocity, window.single());
     }
 }
+
+pub fn gpu_test(query: Query<(&mut Transform, &Mass, &mut Velocity, &CircleCollider)>) {}
 
 //pub fn calculate_density_map(positions: Query<&Transform>, density_map: ResMut<DensityMap>) {
 //    let density = positions

@@ -62,7 +62,11 @@ fn setup(
                         .with_scale(Vec3::splat(10.0)),
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0, 0.0),
-                });
+                })
+                .insert(
+                    Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0)
+                        .with_scale(Vec3::splat(10.0)),
+                );
         }
     }
 }

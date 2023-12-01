@@ -180,9 +180,9 @@ pub fn color_particle(
 pub fn simulate(
     //gravity: Res<Gravity>,
     time: Res<Time>,
-    chunk_map: ResMut<ChunkMap>,
+    mut chunk_map: ResMut<ChunkMap>,
     window: Query<&Window>,
-    mut query: Query<(Entity, &mut Particle)>,
+    mut query: Query<(Entity, &mut Particle, &mut Transform)>,
 ) {
     // Create chunks
     // Extract the size of the window
@@ -198,14 +198,20 @@ pub fn simulate(
         return;
     }
 
+    let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
+    let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
+
+    chunk_map.dim_x = chunks_dim_x;
+    chunk_map.dim_y = chunks_dim_y;
+
     // Allocate a vec to store the chunks, with each chunk being wrapped in a Mutex
-    let chunks: Vec<RwLock<Vec<(Entity, Transform, Velocity)>>> = (0..(chunk_map.dim_x * chunk_map.dim_y)
+    chunk_map.chunks = (0..(chunks_dim_x * chunks_dim_y)
         .max(1))
         .map(|_| RwLock::new(Vec::new()))
         .collect();
 
     // Parallel iteration over the query
-    query.par_iter().for_each(|(id, particle)| {
+    query.par_iter().for_each(|(id, particle, _)| {
         let chunk_coord = chunk_map.get_chunk_coordinates(
             &particle,
             win_dimensions
@@ -214,7 +220,7 @@ pub fn simulate(
         // Calculate the index of the chunk
         let index = chunk_coord.0 + (chunk_coord.1 * chunk_map.dim_x);
         // Grab the chunk and write the particle to it
-        if let Some(chunk) = chunks.get(index) {
+        if let Some(chunk) = chunk_map.chunks.get(index) {
             let mut chunk_guard = chunk.write().unwrap(); // handle locking
             chunk_guard.push((id, particle.pos, particle.velocity.clone()));
         }
@@ -225,7 +231,7 @@ pub fn simulate(
 
     query
         .par_iter_mut()
-        .for_each(|(id, mut particle)| {
+        .for_each(|(id, mut particle, mut render_pos)| {
             let chunks_in_range: Vec<(usize, usize)> = get_nearby_particles(
                 &particle,
                 &chunk_map,
@@ -233,7 +239,7 @@ pub fn simulate(
             );
 
             for chunk_coord in chunks_in_range {
-                if let Some(chunk) = chunks.get(chunk_coord.0 + (chunk_coord.1 * chunk_map.dim_x)) {
+                if let Some(chunk) = chunk_map.chunks.get(chunk_coord.0 + (chunk_coord.1 * chunk_map.dim_x)) {
                     // Perform collision detection
                     let chunk_lock = chunk.read().unwrap();
                     for (other_id, other_pos, other_velocity) in chunk_lock.iter() {
@@ -296,6 +302,8 @@ pub fn simulate(
             if chunk_map.get_chunk_coordinates(&particle, win_dimensions) != chunk_coords {
                 let chunk_index = chunk_map.get_index_from_coords(chunk_map.get_chunk_coordinates(&particle, win_dimensions));
             }
+
+            render_pos.translation = particle.pos.translation.clone();
         });
 }
 

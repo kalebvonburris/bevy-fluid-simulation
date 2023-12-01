@@ -3,13 +3,13 @@
 // 10-12-2023
 // The code containing the application startup for `bevy-fluid-simulation`.
 
-// Removes the command window from Windows
-#![windows_subsystem = "windows"]
+// TODO: Uncomment this! #![windows_subsystem = "window
 
 mod particle;
 use particle::*;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 fn main() {
@@ -38,8 +38,8 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // Generate particles
-    for y in -10..10 {
-        for x in -50..50 {
+    for y in -15..15 {
+        for x in -30..30 {
             commands
                 .spawn(MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
@@ -49,7 +49,6 @@ fn setup(
                 .insert(ParticleBundle {
                     pos: Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0)
                         .with_scale(Vec3::splat(10.0)),
-                    mass: Mass(1.0),
                     collider: CircleCollider::new(10.0),
                     velocity: Velocity::new(0.0, 0.0, 0.0),
                 });

@@ -4,10 +4,10 @@
 // The necessary components to simulate fluid dynamics using particles.
 
 // The amount of velocity lost on a collision.
-const PARTICLE_DAMPENING_FACTOR: f32 = 0.95;
+const PARTICLE_DAMPENING_FACTOR: f32 = 0.85;
 
 // The maximum velocity of a particle.
-const VELOCITY_MAX: f32 = 500.0;
+const VELOCITY_MAX: f32 = 250.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
@@ -166,6 +166,9 @@ pub fn simulate(
     let win_width = w_dimensions.width();
     let win_height = w_dimensions.height();
 
+    // Don't compute steps where computation is nonsensication (0 sized world)
+    if win_width * win_height == 0.0 { return; }
+
     let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
     let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
     // Allocate a vec to store the chunks
@@ -196,48 +199,46 @@ pub fn simulate(
     query
         .par_iter_mut()
         .for_each(|(id, mut pos, mut velocity, collider)| {
-            let particles_in_range: Vec<(Entity, Transform, Velocity)> = get_nearby_particles(
+            let chunks_in_range: Vec<(usize, usize)> = get_nearby_particles(
                 &pos,
-                &chunks,
                 (&chunks_dim_x, &chunks_dim_y),
                 (&win_width, &win_height),
             );
 
-            // Perform collision detection
-            for (other_id, other_pos, other_velocity) in particles_in_range {
-                if id.index() == other_id.index() {
-                    continue;
-                }
-                // Apply fluid dispersion force.
-                let force = calculate_force(&pos, &other_pos);
-                velocity.vec[0] += force.x * delta_seconds / 2.0;
-                velocity.vec[1] += force.y * delta_seconds / 2.0;
+            for chunk_coord in chunks_in_range {
+                let particles_in_range = chunks.get(chunk_coord.0 + (chunk_coord.1 * chunks_dim_x)).unwrap();
+                // Perform collision detection
+                for (other_id, other_pos, other_velocity) in particles_in_range {
+                    if id.index() == other_id.index() {
+                        continue;
+                    }
+                    // Apply fluid dispersion force.
+                    let force = calculate_force(&pos, other_pos);
+                    velocity.vec[0] += force.x * delta_seconds / 2.0;
+                    velocity.vec[1] += force.y * delta_seconds / 2.0;
 
-                let diff_pos = pos.translation - other_pos.translation;
+                    let diff_pos = pos.translation - other_pos.translation;
+                    let diff_velocity = velocity.vec - other_velocity.vec;
 
-                // .max() is used for the case of total overlap (distance is 0)
-                let distance = diff_pos.length().max(0.1);
+                    // .max() is used for the case of total overlap (distance is 0)
+                    let distance = diff_pos.length().max(0.1);
 
-                // TODO: Fix collider being reused!
-                if distance < (collider.radius + collider.radius) / 2.0
-                    && diff_pos.dot(other_velocity.vec - velocity.vec) > 0.0
-                {
-                    let m1 = collider.radius.powf(2.0);
-                    let m2 = collider.radius.powf(2.0);
+                    // TODO: Fix collider being reused!
+                    if distance < (collider.radius + collider.radius) / 2.0
+                        && diff_pos.dot(-diff_velocity) > 0.0
+                    {
+                        let m1 = collider.radius.powf(2.0);
+                        let m2 = collider.radius.powf(2.0);
 
-                    let m = m1 + m2;
+                        let m = m1 + m2;
 
-                    let v1 = velocity.vec;
-                    let v2 = other_velocity.vec;
-                    let r1 = pos.translation;
-                    let r2 = other_pos.translation;
+                        let d = distance.powf(2.0);
 
-                    let d = distance.powf(2.0);
+                        let u1 =
+                            velocity.vec - ((m2 * 2.0 / m) * ((diff_velocity).dot(diff_pos) / d) * (diff_pos));
 
-                    let u1 =
-                        velocity.vec - ((m2 * 2.0 / m) * ((v1 - v2).dot(r1 - r2) / d) * (r1 - r2));
-
-                    velocity.vec = u1;
+                        velocity.vec = u1;
+                    }
                 }
             }
 
@@ -264,16 +265,21 @@ pub fn simulate(
 /// are relevant to the current one.
 fn get_nearby_particles(
     pos: &Transform,
-    chunks: &Vec<Vec<(Entity, Transform, Velocity)>>,
     chunk_dims: (&usize, &usize),
     window_dims: (&f32, &f32),
-) -> Vec<(Entity, Transform, Velocity)> {
-    let mut particles: Vec<(Entity, Transform, Velocity)> = Vec::new();
+) -> Vec<(usize, usize)> {
+    let mut nearby_chunks: Vec<(usize, usize)> = Vec::with_capacity(9);
 
     let chunks_to_check: [(i32, i32); 9] = [
-        (-1, 1),  (0, 1),  (1, 1),
-        (-1, 0),  (0, 0),  (1, 0),
-        (-1, -1), (0, -1), (1, -1),
+        (-1, 1),
+        (0, 1),
+        (1, 1),
+        (-1, 0),
+        (0, 0),
+        (1, 0),
+        (-1, -1),
+        (0, -1),
+        (1, -1),
     ];
 
     let chunk_coords_usize = get_chunk_coordinates(chunk_dims, &pos.translation, window_dims);
@@ -289,18 +295,13 @@ fn get_nearby_particles(
             continue;
         }
 
-        let chunk = chunks
-            .get(
-                (chunk_coords.0 + coord.0
-                    + ((chunk_coords.1 + coord.1) * (*chunk_dims.0 as i32)))
-                    as usize,
-            )
-            .unwrap();
-
-        particles.extend(chunk.clone());
+        nearby_chunks.push((
+            (coord.0 + chunk_coords.0) as usize,
+            (coord.1 + chunk_coords.1) as usize,
+        ));
     }
 
-    particles
+    nearby_chunks
 }
 
 //pub fn gpu_test(query: Query<(&mut Transform, &Mass, &mut Velocity, &CircleCollider)>) {}

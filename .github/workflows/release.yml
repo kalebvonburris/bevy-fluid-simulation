@@ -2,6 +2,8 @@
 on:
     push:
       # Sequence of patterns matched against refs/tags
+      branches:
+        - main
       tags:
         - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
         - 'V*'
@@ -18,8 +20,8 @@ env:
   GAME_EXECUTABLE_NAME: bevy-fluid-simulation
   GAME_OSX_APP_NAME: BevyFluidSim
 
-permissions:
-  contents: write
+
+permissions: write-all
 
 name: Create release
 jobs:
@@ -33,7 +35,7 @@ jobs:
       version: ${{ inputs.version || steps.tag.outputs.tag }}
 
   create-release:
-    name: Create release
+    name: Create Release
     runs-on: ubuntu-latest
     needs: get-version
     env:
@@ -49,7 +51,6 @@ jobs:
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:

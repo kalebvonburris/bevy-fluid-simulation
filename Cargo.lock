@@ -278,7 +278,7 @@ dependencies = [
 name = "async-lock"
 version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dea8b3453dd7cc96711834b75400d671b73e3656975fa68d9f277163b7f7e316"
+checksum = "dea8b345
 dependencies = [
  "event-listener 4.0.0",
  "event-listener-strategy",

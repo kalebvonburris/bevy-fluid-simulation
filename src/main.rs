@@ -21,6 +21,7 @@ fn main() {
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .init_resource::<Gravity>()
+        .init_resource::<ChunkMap>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, simulate)
@@ -31,11 +32,21 @@ fn main() {
 
 fn setup(
     mut commands: Commands,
+    window: Query<&Window>,
+    mut chunk_map: ResMut<ChunkMap>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
+
+    let chunk_map = chunk_map.into_inner();
+
+    let window = window.single();
+
+    // Note: SMOOTHING_RADIUS is stored in particle.rs
+    let chunks_dim_x = (window.width() / (SMOOTHING_RADIUS * 2.0)) as usize;
+    let chunks_dim_y = (window.height() / (SMOOTHING_RADIUS * 2.0)) as usize;
 
     // Generate particles
     for y in -20..20 {
@@ -46,7 +57,7 @@ fn setup(
                     material: materials.add(ColorMaterial::from(Color::BLUE)),
                     ..default()
                 })
-                .insert(ParticleBundle {
+                .insert(Particle {
                     pos: Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0)
                         .with_scale(Vec3::splat(10.0)),
                     collider: CircleCollider::new(10.0),

@@ -19,7 +19,7 @@ fn main() {
         .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
         .add_plugins(LogDiagnosticsPlugin::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin)
         .init_resource::<Gravity>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
@@ -38,7 +38,7 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // Generate particles
-    for y in -15..15 {
+    for y in -20..20 {
         for x in -30..30 {
             commands
                 .spawn(MaterialMesh2dBundle {

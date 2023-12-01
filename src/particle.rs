@@ -4,13 +4,17 @@
 // The necessary components to simulate fluid dynamics using particles.
 
 // The amount of velocity lost on a collision.
-const PARTICLE_DAMPENING_FACTOR: f32 = 0.65;
+const PARTICLE_DAMPENING_FACTOR: f32 = 0.95;
+
+// The maximum velocity of a particle.
+const VELOCITY_MAX: f32 = 500.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
 const SMOOTHING_RADIUS: f32 = 50.0;
 
 // Max 60fps for simulation step
+// TODO: Max this adapt to display refresh rate
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
 // use std::f32::consts::PI;
@@ -34,17 +38,7 @@ impl Default for Gravity {
         Self(Vec2::new(0.0, -98.0))
     }
 }
-
-#[derive(Component, Debug)]
-pub struct Mass(pub f32);
-
-impl Default for Mass {
-    fn default() -> Self {
-        Self(1.) // Default to 1 kg
-    }
-}
-
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct CircleCollider {
     pub radius: f32,
 }
@@ -61,7 +55,7 @@ impl Default for CircleCollider {
     }
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct Velocity {
     pub vec: Vec3,
 }
@@ -82,13 +76,9 @@ impl Default for Velocity {
     }
 }
 
-#[derive(Resource)]
-struct DensityMap {}
-
 #[derive(Default, Debug, Bundle)]
 pub struct ParticleBundle {
     pub pos: Transform,
-    pub mass: Mass,
     pub collider: CircleCollider,
     pub velocity: Velocity,
 }
@@ -150,115 +140,170 @@ pub fn color_particle(
     }
 }
 
+fn get_chunk_coordinates(
+    chunk_dims: (&usize, &usize),
+    pos: &Vec3,
+    win_dimensions: (&f32, &f32),
+) -> (usize, usize) {
+    let chunk_x = (((pos.x + (win_dimensions.0 / 2.0)) / (SMOOTHING_RADIUS * 2.0)) as usize)
+        .clamp(0, *chunk_dims.0 - 1);
+    let chunk_y = (((-pos.y + (win_dimensions.1 / 2.0)) / (SMOOTHING_RADIUS * 2.0)) as usize)
+        .clamp(0, *chunk_dims.1 - 1);
+    (chunk_x, chunk_y)
+}
+
 /// Simulates the movement of particles.
 pub fn simulate(
     //gravity: Res<Gravity>,
+    time: Res<Time>,
     window: Query<&Window>,
-    mut query: Query<(&mut Transform, &mut Velocity, &CircleCollider)>,
+    mut query: Query<(Entity, &mut Transform, &mut Velocity, &CircleCollider)>,
 ) {
-    // Grab the time since the last frame.
-    let delta_seconds = DELTA_TIME_MAX;
-    // Grab the defined gravity constant.
-    //let gravity = gravity.into_inner();
-    // Grab every combination between particles.
-    let mut combinations = query.iter_combinations_mut();
-    // Loop over every particle combination and apply a repelling force.
-    while let Some(
-        [(pos, mut velocity, collider), (other_pos, mut other_velocity, other_collider)],
-    ) = combinations.fetch_next()
-    {
-        // Apply fluid dispersion force.
-        let force = calculate_force(&pos, &other_pos);
-        velocity.vec[0] += force.x * delta_seconds / 2.0;
-        velocity.vec[1] += force.y * delta_seconds / 2.0;
-        other_velocity.vec[0] -= force.x * delta_seconds / 2.0;
-        other_velocity.vec[1] -= force.y * delta_seconds / 2.0;
+    // Create chunks
+    // Extract the size of the window
+    let w_dimensions = &window.get_single().unwrap().resolution;
 
-        /*let diff_pos = pos.translation - other_pos.translation;
-        let distance = diff_pos.length();
-        if distance < (collider.radius + other_collider.radius) / 2.0 {
-            let m1 = collider.radius.powf(2.0);
-            let m2 = other_collider.radius.powf(2.0);
+    let win_width = w_dimensions.width();
+    let win_height = w_dimensions.height();
 
-            let M = m1 + m2;
+    let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
+    let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
+    // Allocate a vec to store the chunks
+    let mut chunks: Vec<Vec<(Entity, Transform, Velocity)>> =
+        vec![Vec::new(); (chunks_dim_x * chunks_dim_y).max(1)];
 
-            let diff_velocity = velocity.vec - other_velocity.vec;
+    // Copy the tuple of position and velocity into their corresponding chunk
+    query.iter().for_each(|(id, pos, velocity, _)| {
+        // Extract the chunk coordinate for the translation
+        let chunk_coord = get_chunk_coordinates(
+            (&chunks_dim_x, &chunks_dim_y),
+            &pos.translation,
+            (&win_width, &win_height)
+        );
+        // Push a copy of the position and velocity into the chunk
+        match chunks.get_mut(chunk_coord.0 + (chunk_coord.1 * chunks_dim_x)) {
+            Some(c) => c.push((id, *pos, velocity.clone())),
+            None => {
+                println!("Crashed trying to access chunk {} at coords {}, {}, chunks_dim_x: {chunks_dim_x:}, chunks_dim_y: {chunks_dim_y:}", chunk_coord.0 + (chunk_coord.1 * chunks_dim_x), chunk_coord.0, chunk_coord.1);
+                panic!("Illegal access!");
+            },
+        };
+    });
 
-            let d = diff_pos.length().powf(2.0);
+    // Grab the time since the last frame, using a const value for the min physics time
+    let delta_seconds = DELTA_TIME_MAX.min(time.delta_seconds());
 
-            let mut u1 =
-                velocity.vec - (m2 * 2.0 / M) * ((diff_velocity).dot(diff_pos) / d * diff_pos);
+    query
+        .par_iter_mut()
+        .for_each(|(id, mut pos, mut velocity, collider)| {
+            let particles_in_range: Vec<(Entity, Transform, Velocity)> = get_nearby_particles(
+                &pos,
+                &chunks,
+                (&chunks_dim_x, &chunks_dim_y),
+                (&win_width, &win_height),
+            );
 
-            
-            if !u1.x.is_normal() { u1.x = 0.0; }
-            if !u1.y.is_normal() { u1.y = 0.0; }
-            if !u1.z.is_normal() { u1.z = 0.0; }
-            
+            // Perform collision detection
+            for (other_id, other_pos, other_velocity) in particles_in_range {
+                if id.index() == other_id.index() {
+                    continue;
+                }
+                // Apply fluid dispersion force.
+                let force = calculate_force(&pos, &other_pos);
+                velocity.vec[0] += force.x * delta_seconds / 2.0;
+                velocity.vec[1] += force.y * delta_seconds / 2.0;
 
-            let mut u2 = 
-                other_velocity.vec - (m1 * 2.0 / M) * (-(diff_velocity).dot(diff_pos) / d * -diff_pos);
+                let diff_pos = pos.translation - other_pos.translation;
 
-            
-            if !u2.x.is_normal() { u2.x = 0.0; }
-            if !u2.y.is_normal() { u2.y = 0.0; }
-            if !u2.z.is_normal() { u2.z = 0.0; }
-            
+                // .max() is used for the case of total overlap (distance is 0)
+                let distance = diff_pos.length().max(0.1);
 
-            /*println!(
-                "p:{:?} op{:?} v:{:?} ov:{:?} dp:{:?} m1:{:?} m2:{:?} dv:{:?} M:{:?} u1:{:?} u2:{:?} d:{d:?}",
-                &pos.translation, &other_pos.translation, &velocity.vec, &other_velocity.vec, &diff_pos, &m1, &m2, &diff_velocity, &M, &u1, &u2
-            );*/
+                // TODO: Fix collider being reused!
+                if distance < (collider.radius + collider.radius) / 2.0
+                    && diff_pos.dot(other_velocity.vec - velocity.vec) > 0.0
+                {
+                    let m1 = collider.radius.powf(2.0);
+                    let m2 = collider.radius.powf(2.0);
 
-            velocity.vec = u1;
-            other_velocity.vec = u2;
-        }*/
-    }
+                    let m = m1 + m2;
 
-    for (mut pos, mut velocity, _) in &mut query {
-        // Reset velocity if it's nan
-        if velocity.vec.is_nan() {
-            println!("Found a NaN velocity");
-            velocity.vec[0] = 0.0;
-            velocity.vec[1] = 0.0;
-            velocity.vec[2] = 0.0;
-        }
-        // Reset the position if it's nan
-        if pos.translation.is_nan() {
-            println!("Found a NaN position");
-            pos.translation.x = 0.0;
-            pos.translation.y = 0.0;
-            pos.translation.z = 0.0;
-        }
+                    let v1 = velocity.vec;
+                    let v2 = other_velocity.vec;
+                    let r1 = pos.translation;
+                    let r2 = other_pos.translation;
 
-        // Apply gravity!
-        //velocity.vec[0] += gravity.0[0] * delta_seconds;
-        //velocity.vec[1] += gravity.0[1] * delta_seconds;
+                    let d = distance.powf(2.0);
 
-        // Move by the velocity we've stored.
-        pos.translation.x += velocity.vec[0] * delta_seconds;
-        pos.translation.y += velocity.vec[1] * delta_seconds;
+                    let u1 =
+                        velocity.vec - ((m2 * 2.0 / m) * ((v1 - v2).dot(r1 - r2) / d) * (r1 - r2));
 
-        // Check for border collision
-        border_collision(&mut pos, &mut velocity, window.single());
-    }
+                    velocity.vec = u1;
+                }
+            }
+
+            // Max velocity check
+            if velocity.vec.length() > VELOCITY_MAX {
+                let scalar = VELOCITY_MAX / velocity.vec.length();
+                velocity.vec *= scalar;
+            }
+
+            // Apply gravity!
+            //velocity.vec[0] += gravity.0[0] * delta_seconds;
+            //velocity.vec[1] += gravity.0[1] * delta_seconds;
+
+            // Move by the velocity we've stored.
+            pos.translation.x += velocity.vec[0] * delta_seconds;
+            pos.translation.y += velocity.vec[1] * delta_seconds;
+
+            // Check for border collision
+            border_collision(&mut pos, &mut velocity, window.single());
+        });
 }
 
-pub fn gpu_test(query: Query<(&mut Transform, &Mass, &mut Velocity, &CircleCollider)>) {}
+/// Uses chunking and the position of a particle to return the particles nearby that
+/// are relevant to the current one.
+fn get_nearby_particles(
+    pos: &Transform,
+    chunks: &Vec<Vec<(Entity, Transform, Velocity)>>,
+    chunk_dims: (&usize, &usize),
+    window_dims: (&f32, &f32),
+) -> Vec<(Entity, Transform, Velocity)> {
+    let mut particles: Vec<(Entity, Transform, Velocity)> = Vec::new();
 
-//pub fn calculate_density_map(positions: Query<&Transform>, density_map: ResMut<DensityMap>) {
-//    let density = positions
-//        .iter()
-//        .map(|pos| {
-//            smoothing_kernel(20.0, (pos.translation -   .translation).length());
-//        })
-//        .sum();
-//}
+    let chunks_to_check: [(i32, i32); 9] = [
+        (-1, 1),  (0, 1),  (1, 1),
+        (-1, 0),  (0, 0),  (1, 0),
+        (-1, -1), (0, -1), (1, -1),
+    ];
 
-//fn smoothing_kernel(radius: f32, distance: f32) -> f32 {
-//    let vol = PI * radius.powf(8.0) / 4.0;
-//    let val = 0.0_f32.max(radius * radius - distance * distance);
-//    val * val * val / vol
-//}
+    let chunk_coords_usize = get_chunk_coordinates(chunk_dims, &pos.translation, window_dims);
+    let chunk_coords = (chunk_coords_usize.0 as i32, chunk_coords_usize.1 as i32);
+
+    for coord in chunks_to_check {
+        // Check if the coordinate is out of bounds (skip)
+        if coord.0 + chunk_coords.0 < 0
+            || coord.0 + chunk_coords.0 >= (*chunk_dims.0 as i32)
+            || coord.1 + chunk_coords.1 < 0
+            || coord.1 + chunk_coords.1 >= (*chunk_dims.1 as i32)
+        {
+            continue;
+        }
+
+        let chunk = chunks
+            .get(
+                (chunk_coords.0 + coord.0
+                    + ((chunk_coords.1 + coord.1) * (*chunk_dims.0 as i32)))
+                    as usize,
+            )
+            .unwrap();
+
+        particles.extend(chunk.clone());
+    }
+
+    particles
+}
+
+//pub fn gpu_test(query: Query<(&mut Transform, &Mass, &mut Velocity, &CircleCollider)>) {}
 
 fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     let distance = (pos2.translation - pos1.translation).length();
@@ -276,7 +321,7 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     // Vector pointing from pos1 to pos2.
     // We normalize and then apply a force function
     // based on the distance between the particles.
-    force *= (distance - SMOOTHING_RADIUS).powf(2.0);
+    force *= (distance - SMOOTHING_RADIUS).abs();
     // Reduce the force generated so we have
     // less chaotic particles.
     Vec2::new(force.x, force.y)

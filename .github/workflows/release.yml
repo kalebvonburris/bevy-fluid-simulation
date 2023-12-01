@@ -41,13 +41,15 @@ jobs:
     steps:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v2
         id: git-cliff
         with:
           config: cliff.toml
-          args: --verbose
+          args: --verbose --latest
         env:
           OUTPUT: CHANGELOG.md
       - name: Create release

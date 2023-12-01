@@ -38,8 +38,8 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // Generate particles
-    for y in -15..15 {
-        for x in -25..25 {
+    for y in -20..20 {
+        for x in -30..30 {
             commands
                 .spawn(MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),

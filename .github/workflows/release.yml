@@ -58,7 +58,7 @@ jobs:
         with:
           tag_name: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
-          body_path: "${{ steps.git-cliff.outputs.changelog }}"
+          body_path: ${{ steps.git-cliff.outputs.changelog }}
           draft: false
           prerelease: false
 

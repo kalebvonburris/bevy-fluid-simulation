@@ -42,10 +42,14 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Git cliff
-        run: |
-          cargo install git-cliff
-          git cliff -o CHANGELOG.md
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v2
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
       - name: Create release
         id: create_release
         uses: actions/create-release@v1

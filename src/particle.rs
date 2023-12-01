@@ -19,6 +19,8 @@ const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
 
 // use std::f32::consts::PI;
 
+use std::sync::RwLock;
+
 /* -- Imports -- */
 // Bevy imports
 use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window};
@@ -126,7 +128,7 @@ pub fn color_particle(
     for (entity, velocity) in query.iter() {
         if let Ok(material_handle) = color_handles.get(entity) {
             // Normalize the velocity vector. Larger values approach 1, smaller values approach 0
-            let absolute_velocity_normalized = clamp_positive(velocity.vec.length() / 150.0);
+            let absolute_velocity_normalized = clamp_positive(velocity.vec.length() / VELOCITY_MAX);
             // Grab the ColorMaterial
             let material = color_assets.get_mut(material_handle).unwrap();
             // Apply the normalized velocity to the material color
@@ -167,30 +169,33 @@ pub fn simulate(
     let win_height = w_dimensions.height();
 
     // Don't compute steps where computation is nonsensication (0 sized world)
-    if win_width * win_height == 0.0 { return; }
+    if win_width * win_height == 0.0 {
+        return;
+    }
 
     let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
     let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
-    // Allocate a vec to store the chunks
-    let mut chunks: Vec<Vec<(Entity, Transform, Velocity)>> =
-        vec![Vec::new(); (chunks_dim_x * chunks_dim_y).max(1)];
+    // Allocate a vec to store the chunks, with each chunk being wrapped in a Mutex
+    let chunks: Vec<RwLock<Vec<(Entity, Transform, Velocity)>>> = (0..(chunks_dim_x * chunks_dim_y)
+        .max(1))
+        .map(|_| RwLock::new(Vec::new()))
+        .collect();
 
-    // Copy the tuple of position and velocity into their corresponding chunk
-    query.iter().for_each(|(id, pos, velocity, _)| {
-        // Extract the chunk coordinate for the translation
+    // Parallel iteration over the query
+    query.par_iter().for_each(|(id, pos, velocity, _)| {
         let chunk_coord = get_chunk_coordinates(
             (&chunks_dim_x, &chunks_dim_y),
             &pos.translation,
             (&win_width, &win_height)
         );
-        // Push a copy of the position and velocity into the chunk
-        match chunks.get_mut(chunk_coord.0 + (chunk_coord.1 * chunks_dim_x)) {
-            Some(c) => c.push((id, *pos, velocity.clone())),
-            None => {
-                println!("Crashed trying to access chunk {} at coords {}, {}, chunks_dim_x: {chunks_dim_x:}, chunks_dim_y: {chunks_dim_y:}", chunk_coord.0 + (chunk_coord.1 * chunks_dim_x), chunk_coord.0, chunk_coord.1);
-                panic!("Illegal access!");
-            },
-        };
+
+        // Calculate the index of the chunk
+        let index = chunk_coord.0 + (chunk_coord.1 * chunks_dim_x);
+        // Grab the chunk and write the particle to it
+        if let Some(chunk) = chunks.get(index) {
+            let mut chunk_guard = chunk.write().unwrap(); // handle locking
+            chunk_guard.push((id, *pos, velocity.clone()));
+        }
     });
 
     // Grab the time since the last frame, using a const value for the min physics time
@@ -206,38 +211,42 @@ pub fn simulate(
             );
 
             for chunk_coord in chunks_in_range {
-                let particles_in_range = chunks.get(chunk_coord.0 + (chunk_coord.1 * chunks_dim_x)).unwrap();
-                // Perform collision detection
-                for (other_id, other_pos, other_velocity) in particles_in_range {
-                    if id.index() == other_id.index() {
-                        continue;
-                    }
-                    // Apply fluid dispersion force.
-                    let force = calculate_force(&pos, other_pos);
-                    velocity.vec[0] += force.x * delta_seconds / 2.0;
-                    velocity.vec[1] += force.y * delta_seconds / 2.0;
+                if let Some(chunk) = chunks.get(chunk_coord.0 + (chunk_coord.1 * chunks_dim_x)) {
+                    // Perform collision detection
+                    let chunk_lock = chunk.read().unwrap();
+                    for (other_id, other_pos, other_velocity) in chunk_lock.iter() {
+                        if id.index() == other_id.index() {
+                            continue;
+                        }
+                        // Apply fluid dispersion force.
+                        let force = calculate_force(&pos, other_pos);
+                        velocity.vec[0] += force.x * delta_seconds;
+                        velocity.vec[1] += force.y * delta_seconds;
 
-                    let diff_pos = pos.translation - other_pos.translation;
-                    let diff_velocity = velocity.vec - other_velocity.vec;
+                        let diff_pos = pos.translation - other_pos.translation;
+                        let diff_velocity = velocity.vec - other_velocity.vec;
 
-                    // .max() is used for the case of total overlap (distance is 0)
-                    let distance = diff_pos.length().max(0.1);
+                        // .max() is used for the case of total overlap (distance is 0)
+                        let distance = diff_pos.length().max(0.1);
 
-                    // TODO: Fix collider being reused!
-                    if distance < (collider.radius + collider.radius) / 2.0
-                        && diff_pos.dot(-diff_velocity) > 0.0
-                    {
-                        let m1 = collider.radius.powf(2.0);
-                        let m2 = collider.radius.powf(2.0);
+                        // TODO: Fix collider being reused!
+                        if distance < (collider.radius + collider.radius) / 2.0
+                            && diff_pos.dot(-diff_velocity) > 0.0
+                        {
+                            let m1 = collider.radius.powf(2.0);
+                            let m2 = collider.radius.powf(2.0);
 
-                        let m = m1 + m2;
+                            let m = m1 + m2;
 
-                        let d = distance.powf(2.0);
+                            let d = distance.powf(2.0);
 
-                        let u1 =
-                            velocity.vec - ((m2 * 2.0 / m) * ((diff_velocity).dot(diff_pos) / d) * (diff_pos));
+                            let u1 = velocity.vec
+                                - ((m2 * 2.0 / m)
+                                    * ((diff_velocity).dot(diff_pos) / d)
+                                    * (diff_pos));
 
-                        velocity.vec = u1;
+                            velocity.vec = u1;
+                        }
                     }
                 }
             }
@@ -322,7 +331,7 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     // Vector pointing from pos1 to pos2.
     // We normalize and then apply a force function
     // based on the distance between the particles.
-    force *= (distance - SMOOTHING_RADIUS).abs();
+    force *= (distance - SMOOTHING_RADIUS).powf(2.0);
     // Reduce the force generated so we have
     // less chaotic particles.
     Vec2::new(force.x, force.y)

@@ -176,6 +176,20 @@ pub fn color_particle(
     }
 }
 
+/*pub fn update_chunks(
+    chunk_map: ResMut<ChunkMap>,
+    query: Query<(Entity, &Particle, &mut Transform)>,
+    window: Query<(&Window)>,
+) {
+    let window = window.single();
+
+    window.
+    // Empty out each chunk
+    for chunk in &chunk_map.chunks {
+        chunk.write().unwrap().clear();
+    }
+}*/
+
 /// Simulates the movement of particles.
 pub fn simulate(
     //gravity: Res<Gravity>,
@@ -186,7 +200,7 @@ pub fn simulate(
 ) {
     // Create chunks
     // Extract the size of the window
-    let w_dimensions = &window.get_single().unwrap().resolution;
+    let w_dimensions = &window.single().resolution;
 
     let win_width = w_dimensions.width();
     let win_height = w_dimensions.height();

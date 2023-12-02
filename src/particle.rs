@@ -87,20 +87,12 @@ pub struct Particle {
 
 #[derive(Default, Debug, Resource)]
 pub struct ChunkMap {
-    chunks: Vec<RwLock<Vec<(Entity, Transform, Velocity)>>>,
-    dim_x: usize,
-    dim_y: usize,
+    pub chunks: Vec<RwLock<Vec<(Entity, Transform, Velocity)>>>,
+    pub dim_x: usize,
+    pub dim_y: usize,
 }
 
 impl ChunkMap {
-    pub fn new() -> Self {
-        ChunkMap { 
-            chunks: Vec::new(),
-            dim_x: 0,
-            dim_y: 0,
-        }
-    }
-
     /// Returns the x, y coordinates of a particle in a ChunkMap.
     pub fn get_chunk_coordinates(
         &self,
@@ -112,10 +104,6 @@ impl ChunkMap {
         let chunk_y = (((-particle.pos.translation.y + (win_dimensions.1 / 2.0)) / (SMOOTHING_RADIUS * 2.0)) as usize)
             .clamp(0, self.dim_y - 1);
         (chunk_x, chunk_y)
-    }
-
-    pub fn get_index_from_coords(&self, chunk_coords: (usize, usize)) -> usize {
-        chunk_coords.0 + (chunk_coords.1 * self.dim_x)
     }
 }
 
@@ -235,8 +223,8 @@ pub fn simulate(
         let index = chunk_coord.0 + (chunk_coord.1 * chunk_map.dim_x);
         // Grab the chunk and write the particle to it
         if let Some(chunk) = chunk_map.chunks.get(index) {
-            let mut chunk_guard = chunk.write().unwrap(); // handle locking
-            chunk_guard.push((id, particle.pos, particle.velocity.clone()));
+            let mut chunk_lock = chunk.write().unwrap(); // handle locking
+            chunk_lock.push((id, particle.pos, particle.velocity.clone()));
         }
     });
 
@@ -303,19 +291,12 @@ pub fn simulate(
             //velocity.vec[0] += gravity.0[0] * delta_seconds;
             //velocity.vec[1] += gravity.0[1] * delta_seconds;
 
-            // Store the current position of the particle
-            let chunk_coords = chunk_map.get_chunk_coordinates(&particle, win_dimensions);
-
             // Move by the velocity we've stored.
             particle.pos.translation.x += particle.velocity.vec[0] * delta_seconds;
             particle.pos.translation.y += particle.velocity.vec[1] * delta_seconds;
 
             // Check for border collision
             border_collision(&mut particle, window.single());
-
-            if chunk_map.get_chunk_coordinates(&particle, win_dimensions) != chunk_coords {
-                let chunk_index = chunk_map.get_index_from_coords(chunk_map.get_chunk_coordinates(&particle, win_dimensions));
-            }
 
             render_pos.translation = particle.pos.translation.clone();
         });

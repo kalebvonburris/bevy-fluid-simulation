@@ -1,9 +1,9 @@
 // main.rs
 // Kaleb Burris
-// 10-12-2023
+// 12-3-2023
 // The code containing the application startup for `bevy-fluid-simulation`.
 
-//#![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 mod particle;
 

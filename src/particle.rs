@@ -1,7 +1,9 @@
 ﻿// particle.rs
 // Kaleb Burris
-// 10-12-2023
+// 12-3-2023
 // The necessary components to simulate fluid dynamics using particles.
+
+/* -- Constants -- */
 
 // The amount of velocity lost on a collision.
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.85;
@@ -11,13 +13,11 @@ const VELOCITY_MAX: f32 = 250.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
-pub const SMOOTHING_RADIUS: f32 = 50.0;
+const SMOOTHING_RADIUS: f32 = 50.0;
 
 // Max 60fps for simulation step
-// TODO: Max this adapt to display refresh rate
+// TODO: Make this adapt to display refresh rate
 const DELTA_TIME_MAX: f32 = 1.0 / 60.0;
-
-// use std::f32::consts::PI;
 
 use std::sync::RwLock;
 
@@ -334,10 +334,6 @@ pub fn simulate(
                 let scalar = VELOCITY_MAX / particle.velocity.vec.length();
                 particle.velocity.vec *= scalar;
             }
-
-            // Apply gravity!
-            //velocity.vec[0] += gravity.0[0] * delta_seconds;
-            //velocity.vec[1] += gravity.0[1] * delta_seconds;
 
             // Move by the velocity we've stored.
             particle.pos.translation.x += particle.velocity.vec[0] * delta_seconds;

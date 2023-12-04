@@ -13,7 +13,8 @@ const VELOCITY_MAX: f32 = 200.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
-const SMOOTHING_RADIUS: f32 = 40.0;
+// Also defines how large chunks are.
+const SMOOTHING_RADIUS: f32 = 35.0;
 
 // Max 60fps for simulation step
 // TODO: Make this adapt to display refresh rate
@@ -122,29 +123,29 @@ fn border_collision(particle: &mut Particle, window: &Window) {
     let win_width = window.width();
     let win_height = window.height();
 
-    let half_radius = particle.collider.radius / 2.0;
+    let radius = particle.collider.radius;
 
     // Particle is to the right edge of the window
-    if particle.pos.translation.x > win_width / 2.0 - half_radius {
-        particle.pos.translation.x = win_width / 2.0 - half_radius;
+    if particle.pos.translation.x > win_width / 2.0 - radius {
+        particle.pos.translation.x = win_width / 2.0 - radius;
         particle.velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is to the left edge of the window
-    if particle.pos.translation.x < -1.0 * win_width / 2.0 + half_radius {
-        particle.pos.translation.x = -1.0 * win_width / 2.0 + half_radius;
+    if particle.pos.translation.x < -1.0 * win_width / 2.0 + radius {
+        particle.pos.translation.x = -1.0 * win_width / 2.0 + radius;
         particle.velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is above the window
-    if particle.pos.translation.y > win_height / 2.0 - half_radius {
-        particle.pos.translation.y = win_height / 2.0 - half_radius;
+    if particle.pos.translation.y > win_height / 2.0 - radius {
+        particle.pos.translation.y = win_height / 2.0 - radius;
         particle.velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is below the window.
-    if particle.pos.translation.y < -1.0 * win_height / 2.0 + half_radius {
-        particle.pos.translation.y = -1.0 * win_height / 2.0 + half_radius;
+    if particle.pos.translation.y < -1.0 * win_height / 2.0 + radius {
+        particle.pos.translation.y = -1.0 * win_height / 2.0 + radius;
         particle.velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 }

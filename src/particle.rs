@@ -245,8 +245,8 @@ pub fn simulate(
     let chunk_map_read = &mut_ref.read_chunk_map;
     let chunk_map_write = &mut mut_ref.write_chunk_map;
 
-    let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
-    let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
+    let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)).ceil() as usize;
+    let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)).ceil() as usize;
 
     // Check if the chunk map has changed
     if chunk_map_write.dim_x != chunks_dim_x || chunk_map_write.dim_y != chunks_dim_y {

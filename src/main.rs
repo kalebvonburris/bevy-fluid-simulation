@@ -39,7 +39,7 @@ fn setup(
 
     let particle_diameter = 6.5;
 
-    let x_max = 80.0;
+    let x_max = 100.0;
     let y_max = 100.0;
 
     // Generate particles

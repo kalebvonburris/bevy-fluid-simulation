@@ -9,11 +9,11 @@
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.85;
 
 // The maximum velocity of a particle.
-const VELOCITY_MAX: f32 = 250.0;
+const VELOCITY_MAX: f32 = 200.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
-const SMOOTHING_RADIUS: f32 = 50.0;
+const SMOOTHING_RADIUS: f32 = 40.0;
 
 // Max 60fps for simulation step
 // TODO: Make this adapt to display refresh rate

@@ -9,12 +9,12 @@
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.85;
 
 // The maximum velocity of a particle.
-const VELOCITY_MAX: f32 = 200.0;
+const VELOCITY_MAX: f32 = 100.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
 // Also defines how large chunks are.
-const SMOOTHING_RADIUS: f32 = 35.0;
+const SMOOTHING_RADIUS: f32 = 30.0;
 
 // Max 60fps for simulation step
 // TODO: Make this adapt to display refresh rate
@@ -268,11 +268,11 @@ pub fn simulate(
     // Write the current data about the particles to the chunk map
     query.iter().for_each(|(id, particle, _)| {
         // Grab the coordinates of the particle
-        let chunk_coord = chunk_map_read.get_chunk_coordinates(particle, win_dimensions);
+        let chunk_coord = chunk_map_write.get_chunk_coordinates(particle, win_dimensions);
         // Calculate the index of the chunk
-        let index = chunk_coord.0 + (chunk_coord.1 * chunk_map_read.dim_x);
+        let index = chunk_coord.0 + (chunk_coord.1 * chunk_map_write.dim_x);
         // Grab the chunk and write the particle to it
-        if let Some(chunk) = chunk_map_read.chunks.get(index) {
+        if let Some(chunk) = chunk_map_write.chunks.get(index) {
             let mut chunk_lock = chunk.write().unwrap(); // handle locking
             chunk_lock.push((id, particle.pos, particle.velocity.clone()));
         }

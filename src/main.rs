@@ -3,7 +3,7 @@
 // 10-12-2023
 // The code containing the application startup for `bevy-fluid-simulation`.
 
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
 mod particle;
 
@@ -22,12 +22,10 @@ fn main() {
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .init_resource::<Gravity>()
-        .init_resource::<ChunkMap>()
+        .init_resource::<ChunkMapDoubleBuffer>()
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, simulate)
-        .add_systems(Update, color_particle)
-        //.add_systems(Update, render_background)
         .run();
 }
 

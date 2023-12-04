@@ -86,6 +86,18 @@ pub struct Particle {
 }
 
 #[derive(Default, Debug, Resource)]
+pub struct ChunkMapDoubleBuffer {
+    read_chunk_map: ChunkMap,
+    write_chunk_map: ChunkMap,
+}
+
+impl ChunkMapDoubleBuffer {
+    fn swap(&mut self) {
+        std::mem::swap(&mut self.read_chunk_map, &mut self.write_chunk_map);
+    }
+}
+
+#[derive(Default, Debug)]
 pub struct ChunkMap {
     pub chunks: Vec<RwLock<Vec<(Entity, Transform, Velocity)>>>,
     pub dim_x: usize,
@@ -99,9 +111,11 @@ impl ChunkMap {
         particle: &Particle,
         win_dimensions: (f32, f32),
     ) -> (usize, usize) {
-        let chunk_x = (((particle.pos.translation.x + (win_dimensions.0 / 2.0)) / (SMOOTHING_RADIUS * 2.0)) as usize)
+        let chunk_x = (((particle.pos.translation.x + (win_dimensions.0 / 2.0))
+            / (SMOOTHING_RADIUS * 2.0)) as usize)
             .clamp(0, self.dim_x - 1);
-        let chunk_y = (((-particle.pos.translation.y + (win_dimensions.1 / 2.0)) / (SMOOTHING_RADIUS * 2.0)) as usize)
+        let chunk_y = (((-particle.pos.translation.y + (win_dimensions.1 / 2.0))
+            / (SMOOTHING_RADIUS * 2.0)) as usize)
             .clamp(0, self.dim_y - 1);
         (chunk_x, chunk_y)
     }
@@ -137,52 +151,11 @@ fn border_collision(particle: &mut Particle, window: &Window) {
     }
 }
 
-/// Clamps an f32 to be within [0, 1) for any value >= 0
-fn clamp_positive(x: f32) -> f32 {
-    1.0 - (-x).exp()
-}
-
-pub fn color_particle(
-    query: Query<(Entity, &Particle)>,
-    mut color_assets: ResMut<Assets<ColorMaterial>>,
-    color_handles: Query<&mut Handle<ColorMaterial>>,
-) {
-    for (entity, particle) in query.iter() {
-        if let Ok(material_handle) = color_handles.get(entity) {
-            // Normalize the velocity vector. Larger values approach 1, smaller values approach 0
-            let absolute_velocity_normalized = clamp_positive(particle.velocity.vec.length() / VELOCITY_MAX);
-            // Grab the ColorMaterial
-            let material = color_assets.get_mut(material_handle).unwrap();
-            // Apply the normalized velocity to the material color
-            material.color = Color::rgba(
-                absolute_velocity_normalized,
-                absolute_velocity_normalized,
-                1.0,
-                1.0,
-            );
-        }
-    }
-}
-
-/*pub fn update_chunks(
-    chunk_map: ResMut<ChunkMap>,
-    query: Query<(Entity, &Particle, &mut Transform)>,
-    window: Query<(&Window)>,
-) {
-    let window = window.single();
-
-    window.
-    // Empty out each chunk
-    for chunk in &chunk_map.chunks {
-        chunk.write().unwrap().clear();
-    }
-}*/
-
 /// Simulates the movement of particles.
 pub fn simulate(
     //gravity: Res<Gravity>,
     time: Res<Time>,
-    mut chunk_map: ResMut<ChunkMap>,
+    mut chunk_map_double_buffer: ResMut<ChunkMapDoubleBuffer>,
     window: Query<&Window>,
     mut query: Query<(Entity, &mut Particle, &mut Transform)>,
 ) {
@@ -200,29 +173,30 @@ pub fn simulate(
         return;
     }
 
+    let mut_ref = chunk_map_double_buffer.as_mut();
+
+    let chunk_map_read = &mut_ref.read_chunk_map;
+    let chunk_map_write = &mut mut_ref.write_chunk_map;
+
     let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
     let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
 
-    chunk_map.dim_x = chunks_dim_x;
-    chunk_map.dim_y = chunks_dim_y;
+    chunk_map_write.dim_x = chunks_dim_x;
+    chunk_map_write.dim_y = chunks_dim_y;
 
     // Allocate a vec to store the chunks, with each chunk being wrapped in a Mutex
-    chunk_map.chunks = (0..(chunks_dim_x * chunks_dim_y)
-        .max(1))
+    chunk_map_write.chunks = (0..(chunks_dim_x * chunks_dim_y).max(1))
         .map(|_| RwLock::new(Vec::new()))
         .collect();
 
     // Parallel iteration over the query
     query.par_iter().for_each(|(id, particle, _)| {
-        let chunk_coord = chunk_map.get_chunk_coordinates(
-            &particle,
-            win_dimensions
-        );
+        let chunk_coord = chunk_map_read.get_chunk_coordinates(particle, win_dimensions);
 
         // Calculate the index of the chunk
-        let index = chunk_coord.0 + (chunk_coord.1 * chunk_map.dim_x);
+        let index = chunk_coord.0 + (chunk_coord.1 * chunk_map_read.dim_x);
         // Grab the chunk and write the particle to it
-        if let Some(chunk) = chunk_map.chunks.get(index) {
+        if let Some(chunk) = chunk_map_read.chunks.get(index) {
             let mut chunk_lock = chunk.write().unwrap(); // handle locking
             chunk_lock.push((id, particle.pos, particle.velocity.clone()));
         }
@@ -234,14 +208,14 @@ pub fn simulate(
     query
         .par_iter_mut()
         .for_each(|(id, mut particle, mut render_pos)| {
-            let chunks_in_range: Vec<(usize, usize)> = get_nearby_particles(
-                &particle,
-                &chunk_map,
-                win_dimensions,
-            );
+            let chunks_in_range: Vec<(usize, usize)> =
+                get_nearby_particles(&particle, chunk_map_read, win_dimensions);
 
             for chunk_coord in chunks_in_range {
-                if let Some(chunk) = chunk_map.chunks.get(chunk_coord.0 + (chunk_coord.1 * chunk_map.dim_x)) {
+                if let Some(chunk) = chunk_map_read
+                    .chunks
+                    .get(chunk_coord.0 + (chunk_coord.1 * chunk_map_read.dim_x))
+                {
                     // Perform collision detection
                     let chunk_lock = chunk.read().unwrap();
                     for (other_id, other_pos, other_velocity) in chunk_lock.iter() {
@@ -275,7 +249,7 @@ pub fn simulate(
                                     * ((diff_velocity).dot(diff_pos) / d)
                                     * (diff_pos));
 
-                                    particle.velocity.vec = u1;
+                            particle.velocity.vec = u1;
                         }
                     }
                 }
@@ -298,8 +272,10 @@ pub fn simulate(
             // Check for border collision
             border_collision(&mut particle, window.single());
 
-            render_pos.translation = particle.pos.translation.clone();
+            render_pos.translation = particle.pos.translation;
         });
+
+        chunk_map_double_buffer.swap();
 }
 
 /// Uses chunking and the position of a particle to return the particles nearby that

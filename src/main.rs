@@ -37,6 +37,8 @@ fn setup(
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
 
+    let particle_radius = 5.0;
+
     // Generate particles
     for y in -20..20 {
         for x in -30..30 {
@@ -47,14 +49,22 @@ fn setup(
                     ..default()
                 })
                 .insert(Particle {
-                    pos: Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0)
-                        .with_scale(Vec3::splat(10.0)),
-                    collider: CircleCollider::new(10.0),
+                    pos: Transform::from_xyz(
+                        x as f32 * particle_radius,
+                        y as f32 * particle_radius,
+                        0.0,
+                    )
+                    .with_scale(Vec3::splat(particle_radius)),
+                    collider: CircleCollider::new(particle_radius),
                     velocity: Velocity::new(0.0, 0.0, 0.0),
                 })
                 .insert(
-                    Transform::from_xyz((x * 10) as f32, (y * 10) as f32, 0.0)
-                        .with_scale(Vec3::splat(10.0)),
+                    Transform::from_xyz(
+                        x as f32 * particle_radius,
+                        y as f32 * particle_radius,
+                        0.0,
+                    )
+                    .with_scale(Vec3::splat(particle_radius)),
                 );
         }
     }

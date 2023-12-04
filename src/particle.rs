@@ -23,7 +23,7 @@ use std::sync::RwLock;
 
 /* -- Imports -- */
 // Bevy imports
-use bevy::{prelude::*, sprite::ColorMaterial, time::Time, window::Window};
+use bevy::{prelude::*, time::Time, window::Window};
 
 // Rayon for parallelism
 // use rayon::prelude::*;
@@ -126,27 +126,29 @@ fn border_collision(particle: &mut Particle, window: &Window) {
     let win_width = window.width();
     let win_height = window.height();
 
+    let half_radius = particle.collider.radius / 2.0;
+
     // Particle is to the right edge of the window
-    if particle.pos.translation.x > win_width / 2.0 - 5.0 {
-        particle.pos.translation.x = win_width / 2.0 - 5.0;
+    if particle.pos.translation.x > win_width / 2.0 - half_radius {
+        particle.pos.translation.x = win_width / 2.0 - half_radius;
         particle.velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is to the left edge of the window
-    if particle.pos.translation.x < -1.0 * win_width / 2.0 + 5.0 {
-        particle.pos.translation.x = -1.0 * win_width / 2.0 + 5.0;
+    if particle.pos.translation.x < -1.0 * win_width / 2.0 + half_radius {
+        particle.pos.translation.x = -1.0 * win_width / 2.0 + half_radius;
         particle.velocity.vec[0] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is above the window
-    if particle.pos.translation.y > win_height / 2.0 - 5.0 {
-        particle.pos.translation.y = win_height / 2.0 - 5.0;
+    if particle.pos.translation.y > win_height / 2.0 - half_radius {
+        particle.pos.translation.y = win_height / 2.0 - half_radius;
         particle.velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 
     // Particle is below the window.
-    if particle.pos.translation.y < -1.0 * win_height / 2.0 + 5.0 {
-        particle.pos.translation.y = -1.0 * win_height / 2.0 + 5.0;
+    if particle.pos.translation.y < -1.0 * win_height / 2.0 + half_radius {
+        particle.pos.translation.y = -1.0 * win_height / 2.0 + half_radius;
         particle.velocity.vec[1] *= -1.0 * PARTICLE_DAMPENING_FACTOR;
     }
 }
@@ -275,7 +277,7 @@ pub fn simulate(
             render_pos.translation = particle.pos.translation;
         });
 
-        chunk_map_double_buffer.swap();
+    chunk_map_double_buffer.swap();
 }
 
 /// Uses chunking and the position of a particle to return the particles nearby that

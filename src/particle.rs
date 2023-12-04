@@ -183,18 +183,27 @@ pub fn simulate(
     let chunks_dim_x = (win_width / (SMOOTHING_RADIUS * 2.0)) as usize;
     let chunks_dim_y = (win_height / (SMOOTHING_RADIUS * 2.0)) as usize;
 
-    chunk_map_write.dim_x = chunks_dim_x;
-    chunk_map_write.dim_y = chunks_dim_y;
+    // Check if the chunk map has changed
+    if chunk_map_write.dim_x != chunks_dim_x || chunk_map_write.dim_y != chunks_dim_y {
+        // If so, create a new chunk map
+        chunk_map_write.dim_x = chunks_dim_x;
+        chunk_map_write.dim_y = chunks_dim_y;
+        chunk_map_write.chunks = (0..(chunks_dim_x * chunks_dim_y).max(1))
+            .map(|_| RwLock::new(Vec::new()))
+            .collect();
+    }
 
-    // Allocate a vec to store the chunks, with each chunk being wrapped in a Mutex
-    chunk_map_write.chunks = (0..(chunks_dim_x * chunks_dim_y).max(1))
-        .map(|_| RwLock::new(Vec::new()))
-        .collect();
+    // Clear the output chunk map
+    chunk_map_write.chunks.iter_mut().for_each(|chunk| {
+        if let Ok(mut chunk_lock) = chunk.write() {
+            chunk_lock.clear();
+        }
+    });
 
-    // Parallel iteration over the query
-    query.par_iter().for_each(|(id, particle, _)| {
+    // Write the current data about the particles to the chunk map
+    query.iter().for_each(|(id, particle, _)| {
+        // Grab the coordinates of the particle
         let chunk_coord = chunk_map_read.get_chunk_coordinates(particle, win_dimensions);
-
         // Calculate the index of the chunk
         let index = chunk_coord.0 + (chunk_coord.1 * chunk_map_read.dim_x);
         // Grab the chunk and write the particle to it

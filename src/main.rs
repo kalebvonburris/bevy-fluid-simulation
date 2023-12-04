@@ -37,11 +37,14 @@ fn setup(
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
 
-    let particle_radius = 5.0;
+    let particle_diameter = 10.0;
+
+    let x_max = 80.0;
+    let y_max = 100.0;
 
     // Generate particles
-    for y in -20..20 {
-        for x in -30..30 {
+    for y in 0..(x_max as u32) {
+        for x in 0..(y_max as u32) {
             commands
                 .spawn(MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
@@ -50,21 +53,21 @@ fn setup(
                 })
                 .insert(Particle {
                     pos: Transform::from_xyz(
-                        x as f32 * particle_radius,
-                        y as f32 * particle_radius,
+                        (x as f32 - (x_max / 2.0)) * particle_diameter,
+                        ((y_max / 2.0) - y as f32) * particle_diameter,
                         0.0,
                     )
-                    .with_scale(Vec3::splat(particle_radius)),
-                    collider: CircleCollider::new(particle_radius),
+                    .with_scale(Vec3::splat(particle_diameter)),
+                    collider: CircleCollider::new(particle_diameter / 2.0),
                     velocity: Velocity::new(0.0, 0.0, 0.0),
                 })
                 .insert(
                     Transform::from_xyz(
-                        x as f32 * particle_radius,
-                        y as f32 * particle_radius,
+                        (x as f32 - (x_max / 2.0)) * particle_diameter,
+                        ((y_max / 2.0) - y as f32) * particle_diameter,
                         0.0,
                     )
-                    .with_scale(Vec3::splat(particle_radius)),
+                    .with_scale(Vec3::splat(particle_diameter)),
                 );
         }
     }

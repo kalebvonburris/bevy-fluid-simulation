@@ -116,7 +116,7 @@ impl ChunkMap {
     }
 }
 
-/* -- Helper functions */
+/* -- Helper functions -- */
 
 /// Detects if a particle is outside of the window, reverses it velocity, and moves it back into the window.
 fn border_collision(particle: &mut Particle, window: &Window) {
@@ -216,6 +216,7 @@ fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
     Vec2::new(force.x, force.y)
 }
 
+/* -- Simulation -- */
 
 /// Simulates the movement of particles.
 pub fn simulate(

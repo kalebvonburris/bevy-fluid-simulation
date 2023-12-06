@@ -3,7 +3,7 @@
 // 12-3-2023
 // The code containing the application startup for `bevy-fluid-simulation`.
 
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
 mod particle;
 
@@ -39,7 +39,7 @@ fn setup(
 
     let particle_diameter = 6.5;
 
-    let x_max = 80.0;
+    let x_max = 100.0;
     let y_max = 100.0;
 
     // Generate particles

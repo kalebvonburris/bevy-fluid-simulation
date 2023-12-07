@@ -6,8 +6,12 @@
 //#![windows_subsystem = "windows"]
 
 mod particle;
-
 use particle::*;
+
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
+
+mod density_texture;
+use density_texture::*;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
@@ -26,6 +30,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, simulate)
+        .add_systems(Update, update_density_texture_cpu)
         .run();
 }
 
@@ -33,14 +38,16 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut images: ResMut<Assets<Image>>,
+    window: Query<&Window>,
 ) {
     // Create camera for 2D environment.
     commands.spawn(Camera2dBundle::default());
 
-    let particle_diameter = 6.5;
+    let particle_diameter = 12.0;
 
-    let x_max = 100.0;
-    let y_max = 100.0;
+    let x_max = 50.0;
+    let y_max = 50.0;
 
     // Generate particles
     for y in 0..(x_max as u32) {
@@ -71,4 +78,26 @@ fn setup(
                 );
         }
     }
+
+    let window = window.single();
+
+    // Generate density map texture
+    let image = Image::new_fill(
+        Extent3d {
+            width: window.width() as u32,
+            height: window.height() as u32,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &[0, 0, 0, 255],
+        TextureFormat::Rgba8Unorm,
+    );
+    let image = images.add(image);
+
+    commands.spawn(SpriteBundle {
+        sprite: Sprite { ..default() },
+        texture: image.clone(),
+        transform: Transform::from_xyz(0.0, 0.0, -1.0),
+        ..default()
+    });
 }

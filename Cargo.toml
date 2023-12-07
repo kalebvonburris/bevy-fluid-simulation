@@ -1,12 +1,12 @@
 [package]
 name = "bevy-fluid-simulation"
-version = "0.1.2"
+version = "0.1.5"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.12.0"
+bevy ={ version = "0.12.1", features = ["multi-threaded"] }
 rand = "0.8.5"
 rayon = "1.8.0"
 webbrowser = { version = "0.8", features = ["hardened"] }
@@ -31,5 +31,6 @@ debug = true
 
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
+debug = false
 opt-level = 3
 

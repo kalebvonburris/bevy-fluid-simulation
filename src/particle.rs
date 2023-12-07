@@ -1,4 +1,4 @@
-﻿// particle.rs
+// particle.rs
 // Kaleb Burris
 // 12-3-2023
 // The necessary components to simulate fluid dynamics using particles.
@@ -9,12 +9,12 @@
 const PARTICLE_DAMPENING_FACTOR: f32 = 0.85;
 
 // The maximum velocity of a particle.
-const VELOCITY_MAX: f32 = 200.0;
+pub const VELOCITY_MAX: f32 = 300.0;
 
 // Smoothing radius for smoothing kernel.
 // Defines how far from a point we consider for particle interactions.
 // Also defines how large chunks are.
-const SMOOTHING_RADIUS: f32 = 35.0;
+pub const SMOOTHING_RADIUS: f32 = 70.0;
 
 // Max 60fps for simulation step
 // TODO: Make this adapt to display refresh rate
@@ -24,7 +24,7 @@ use std::sync::RwLock;
 
 /* -- Imports -- */
 // Bevy imports
-use bevy::{prelude::*, time::Time, window::Window, math::Vec3A};
+use bevy::{math::Vec3A, prelude::*, time::Time, window::Window};
 
 /* -- Structs and impls -- */
 #[derive(Debug, Resource)]
@@ -82,8 +82,8 @@ pub struct Particle {
 
 #[derive(Default, Debug, Resource)]
 pub struct ChunkMapDoubleBuffer {
-    read_chunk_map: ChunkMap,
-    write_chunk_map: ChunkMap,
+    pub read_chunk_map: ChunkMap,
+    pub write_chunk_map: ChunkMap,
 }
 
 impl ChunkMapDoubleBuffer {
@@ -103,22 +103,22 @@ impl ChunkMap {
     /// Returns the x, y coordinates of a particle in a ChunkMap.
     pub fn get_chunk_coordinates(
         &self,
-        particle: &Particle,
-        win_dimensions: (f32, f32),
+        position: &(f32, f32),
+        win_dimensions: &(f32, f32),
     ) -> (usize, usize) {
-        let chunk_x = (((particle.pos.translation.x + (win_dimensions.0 / 2.0))
-            / (SMOOTHING_RADIUS * 2.0)) as usize)
+        let chunk_x = (((position.0 + (win_dimensions.0 / 2.0)) / (SMOOTHING_RADIUS * 2.0))
+            as usize)
             .clamp(0, self.dim_x - 1);
-        let chunk_y = (((-particle.pos.translation.y + (win_dimensions.1 / 2.0))
-            / (SMOOTHING_RADIUS * 2.0)) as usize)
+        let chunk_y = (((-position.1 + (win_dimensions.1 / 2.0)) / (SMOOTHING_RADIUS * 2.0))
+            as usize)
             .clamp(0, self.dim_y - 1);
         (chunk_x, chunk_y)
     }
 
     pub fn resize(&mut self, new_dim_x: usize, new_dim_y: usize) {
         // If so, create a new chunk map
-        self.dim_x = new_dim_x;
-        self.dim_y = new_dim_y;
+        self.dim_x = new_dim_x.max(1);
+        self.dim_y = new_dim_y.max(1);
         self.chunks = (0..(new_dim_x * new_dim_y).max(1))
             .map(|_| RwLock::new(Vec::new()))
             .collect();
@@ -133,12 +133,19 @@ impl ChunkMap {
         });
     }
 
-    /// Distributes 
-    pub fn distribute_particles(&mut self, query: &mut Query<(Entity, &mut Particle, &mut Transform)>, win_dimensions: &(f32, f32)) {
+    /// Distributes
+    pub fn distribute_particles(
+        &mut self,
+        query: &mut Query<(Entity, &mut Particle, &mut Transform)>,
+        win_dimensions: &(f32, f32),
+    ) {
         // Write the current data about the particles to the chunk map
         query.iter().for_each(|(id, particle, _)| {
             // Grab the coordinates of the particle
-            let chunk_coord = self.get_chunk_coordinates(particle, *win_dimensions);
+            let chunk_coord = self.get_chunk_coordinates(
+                &(particle.pos.translation.x, particle.pos.translation.y),
+                win_dimensions,
+            );
             // Calculate the index of the chunk
             let index = chunk_coord.0 + (chunk_coord.1 * self.dim_x);
             // Grab the chunk and write the particle to it
@@ -185,22 +192,20 @@ fn border_collision(particle: &mut Particle, win_dimensions: &(f32, f32)) {
 }
 
 /// Uses chunking and the position of a particle to return indices of neighboring chunks.
-fn get_nearby_chunks(
-    particle: &Particle,
+pub fn get_nearby_chunks(
+    position: &(f32, f32),
     chunk_map: &ChunkMap,
-    window_dims: (f32, f32),
+    window_dims: &(f32, f32),
 ) -> Vec<usize> {
     let mut nearby_chunks: Vec<usize> = Vec::with_capacity(9); // Still preallocate space for 9 chunks.
 
     // Get the current chunk coordinates as usize, then convert them to i32 for arithmetic.
-    let chunk_coords_usize = chunk_map.get_chunk_coordinates(particle, window_dims);
+    let chunk_coords_usize = chunk_map.get_chunk_coordinates(position, window_dims);
     let (chunk_x, chunk_y) = (chunk_coords_usize.0 as i32, chunk_coords_usize.1 as i32);
-    
+
     // Define the range of x and y positions to check around the current chunk.
-    let x_range = 
-        (chunk_x - 1).max(0)..=(chunk_x + 1).min(chunk_map.dim_x as i32 - 1);
-    let y_range = 
-        (chunk_y - 1).max(0)..=(chunk_y + 1).min(chunk_map.dim_y as i32 - 1);
+    let x_range = (chunk_x - 1).max(0)..=(chunk_x + 1).min(chunk_map.dim_x as i32 - 1);
+    let y_range = (chunk_y - 1).max(0)..=(chunk_y + 1).min(chunk_map.dim_y as i32 - 1);
 
     // Iterate over the 3x3 grid of chunks around the current chunk within valid bounds.
     for y in y_range {
@@ -213,15 +218,15 @@ fn get_nearby_chunks(
 }
 
 /// Returns the force generated by the proximity of two particles.
-fn calculate_force(pos1: &Transform, pos2: &Transform) -> Vec2 {
-    let distance = (pos2.translation - pos1.translation).length();
+pub fn calculate_force(pos1: Vec3, pos2: Vec3) -> Vec2 {
+    let distance = (pos2 - pos1).length();
 
     // Ignore stacked cases and particles outside of the influence of a particle.
     if distance > SMOOTHING_RADIUS {
         return Vec2::ZERO;
     }
 
-    let mut force = match (pos1.translation - pos2.translation).try_normalize() {
+    let mut force = match (pos1 - pos2).try_normalize() {
         Some(x) => x,
         None => Vec3::new(rand::random::<f32>(), rand::random::<f32>(), 0.0).normalize(),
     };
@@ -270,8 +275,7 @@ pub fn simulate(
     // Check if the chunk map has changed and resize it
     if chunk_map_write.dim_x != chunks_dim_x || chunk_map_write.dim_y != chunks_dim_y {
         chunk_map_write.resize(chunks_dim_x, chunks_dim_y);
-    }
-    else {
+    } else {
         // Clear the output chunk map
         chunk_map_write.clear_chunks();
     }
@@ -284,14 +288,14 @@ pub fn simulate(
     query
         .par_iter_mut()
         .for_each(|(id, mut particle, mut render_pos)| {
-            let chunks_in_range: Vec<usize> =
-                get_nearby_chunks(&particle, chunk_map_read, win_dimensions);
+            let chunks_in_range: Vec<usize> = get_nearby_chunks(
+                &(particle.pos.translation.x, particle.pos.translation.y),
+                chunk_map_read,
+                &win_dimensions,
+            );
 
             for chunk_index in chunks_in_range {
-                if let Some(chunk) = chunk_map_read
-                    .chunks
-                    .get(chunk_index)
-                {
+                if let Some(chunk) = chunk_map_read.chunks.get(chunk_index) {
                     // Perform collision detection
                     let chunk_lock = chunk.read().unwrap();
                     for (other_id, other_pos, other_velocity) in chunk_lock.iter() {
@@ -299,12 +303,15 @@ pub fn simulate(
                             continue;
                         }
                         // Apply fluid dispersion force.
-                        let force = calculate_force(&particle.pos, other_pos);
+                        let force =
+                            calculate_force(particle.pos.translation, other_pos.translation);
                         particle.velocity.vec[0] += force.x * delta_seconds;
                         particle.velocity.vec[1] += force.y * delta_seconds;
 
-                        let diff_pos: Vec3A = (particle.pos.translation - other_pos.translation).into();
-                        let diff_velocity: Vec3A = (particle.velocity.vec - other_velocity.vec).into();
+                        let diff_pos: Vec3A =
+                            (particle.pos.translation - other_pos.translation).into();
+                        let diff_velocity: Vec3A =
+                            (particle.velocity.vec - other_velocity.vec).into();
 
                         // .max() is used for the case of total overlap (distance is 0)
                         let distance = diff_pos.length().max(0.1);

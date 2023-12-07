@@ -30,21 +30,24 @@ pub fn update_density_texture_cpu(
     let chunk_map_read = &chunk_map_double_buffer.as_ref().read_chunk_map;
 
     // Resize the texture: this ensures that the texture always fits the window
-    if texture.size().to_array() != [win_width as u32, win_height as u32] {
-        texture.resize(Extent3d {
-            width: window.width() as u32,
-            height: window.height() as u32,
-            depth_or_array_layers: 1,
-        });
+    let new_extent: Extent3d = Extent3d {
+        width: win_width as u32,
+        height: win_height as u32,
+        depth_or_array_layers: 1,
+    };
+
+    if texture.texture_descriptor.size != new_extent {
+        texture.resize(new_extent);
     }
 
     // Precompute the midpoints of the window
-    let half_win_width = win_width as f32 / 2.0;
-    let half_win_height = win_height as f32 / 2.0;
+    let half_win_width = win_width / 2.0;
+    let half_win_height = win_height / 2.0;
 
     // Using Rust's chunks() iterator function to operate on an entire pixel at a time (sections of 4 u8s)
     // Directly editing the data also means we save on allocating the memory of the image
-    texture.data
+    texture
+        .data
         .par_chunks_mut(4)
         .enumerate()
         .for_each(|(index, pixel)| {
@@ -68,15 +71,9 @@ pub fn update_density_texture_cpu(
                     // Perform weight additive operation on the nearby chunk
                     let chunk_lock = chunk.read().unwrap();
                     for (_, other_pos, _) in chunk_lock.iter() {
-                        let distance =
-                            (vec3_coords - other_pos.translation).length();
-                        if distance < SMOOTHING_RADIUS {
-                            let force = calculate_force(
-                                vec3_coords,
-                                other_pos.translation,
-                            )
-                            .length();
-                            weight += force;
+                        let distance_sq = (vec3_coords - other_pos.translation).length_squared();
+                        if distance_sq < SMOOTHING_RADIUS.powi(2) {
+                            weight += (distance_sq.sqrt() - SMOOTHING_RADIUS).powi(2).max(0.0);
                         }
                     }
                 }

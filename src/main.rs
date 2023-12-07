@@ -55,7 +55,7 @@ fn setup(
             commands
                 .spawn(MaterialMesh2dBundle {
                     mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
-                    material: materials.add(ColorMaterial::from(Color::BLUE)),
+                    material: materials.add(ColorMaterial::from(Color::rgba(0.0, 0.0, 0.0, 0.5))),
                     ..default()
                 })
                 .insert(Particle {

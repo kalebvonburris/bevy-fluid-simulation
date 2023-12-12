@@ -10,6 +10,7 @@ bevy ={ version = "0.12.1", features = ["multi-threaded"] }
 rand = "0.8.5"
 rayon = "1.8.0"
 webbrowser = { version = "0.8", features = ["hardened"] }
+wgpu = "0.18.0"
 
 
 [build-dependencies]

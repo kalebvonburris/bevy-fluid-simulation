@@ -1,0 +1,30 @@
+﻿[application]
+name = "Bevy Fluid Simulation Blog"
+default_platform = "web"
+out_dir = "../docs"
+base_path = "bevy-fluid-simulation"
+
+[web.app]
+title = "Bevy Fluid Simulation Blog"
+base_path = "bevy_fluid_simulation"
+
+[web.watcher]
+reload_html = true
+watch_path = ["docs"]
+index_on_404 = true
+
+[web.resource]
+# CSS style file
+style = []
+
+# Javascript code file :(((((
+script = []
+
+[web.resource.dev]
+# Same as [web.resource], but for development servers
+
+# CSS style file
+style = []
+
+# JavaScript files
+script = []

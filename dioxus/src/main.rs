@@ -13,7 +13,7 @@ fn app(cx: Scope) -> Element {
             class: "pt-8 pb-16 lg:pt-16 lg:pb-24 bg-white dark:bg-gray-900 antialiased text-gray-500 dark:text-gray-400 h-screen",
             div {
                 article {
-                    class: "mx-auto w-full max-w-2xl format format-sm sm:format-base lg:format-lg format-blue dark:format-invert",
+                    class: "mx-auto w-full max-w-4xl format format-sm sm:format-base lg:format-lg format-blue dark:format-invert",
                     header {
                         class: "mb-4 lg:mb-6 not-format",
                         address {
@@ -28,7 +28,7 @@ fn app(cx: Scope) -> Element {
                                     }
                                     p {
                                         class: "text-base text-gray-500 dark:text-gray-400",
-                                        "Computer Science Major at the University of Alaska Fairbanks"
+                                        "Computer Science Major at the University of Alaska Fairbanks & Student Intern at the Alaska Satellite Facility"
                                     }
                                     p {
                                         class: "text-base text-gray-500 dark:text-gray-400",
@@ -55,10 +55,30 @@ fn app(cx: Scope) -> Element {
                     br {}
 
                     p {
-                        "For the project, I elected to go with a fluid simulation and starting looking for solutions of how I would implement this. As I already had a lot of experience with the programming language ", b { "Rust" }, " I decided a game engine in ", b { "Rust" }, " would be the best choice."
+                        "For the project, I'd recently seen ", b { a { class: "text-blue-700", href: "https://youtu.be/rSKMYc1CQHE?si=NXZc9vEJqeMCfxt4", "Sebatian Lague's video on making a fluid simulation in Unity" } }, " and was immediately inspired to replicate at least some of it. As I already had a lot of experience with the programming language ", b { a { class: "text-blue-700", href: "https://www.rust-lang.org/", "Rust" } }, " I decided to try my version in Rust, and thus would need a Rust-based game engine. The most most popular option for Rust game engines is ", b { a { class: "text-blue-700", href: "https://bevyengine.org/", "Bevy" } }, ", an ECS-driven engine that promised performance in a lightweight and portable package."
                     }
 
                     br {}
+
+                    h2 {
+                        class: "mb-4 text-3xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-3xl dark:text-white",
+                        "Bevy and the ECS"
+                    }
+
+                    p {
+                        "Bevy is build with an ", b { "entity-component-system" }, " (ECS), which means that data is stored as components; think health bars, movement speed, textures, etc. Components are bundled together with an id, and each of these bundles is called an ", i { "entity" }, ". ", i { "Systems" }, " are functions that take ", i {"queries"}, " and perform operations on them; translations, mutations, collisions, etc. Bundling systems together creates " i { "plugins" }, " and a bundle of plugins is a game. You can also insert ", i { "resources" }, " data that isn't attached to entities in your world; things like terrain, sounds, music, global variables, etc."
+                    }
+
+                    br {}
+
+                    h2 {
+                        class: "mb-4 text-3xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-3xl dark:text-white",
+                        "Building a Simulation"
+                    }
+
+                    p {
+                        ""
+                    }
                 }
             }
         }

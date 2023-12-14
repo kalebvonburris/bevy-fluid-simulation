@@ -573,8 +573,8 @@ video {
   width: 100%;
 }
 
-.max-w-2xl {
-  max-width: 42rem;
+.max-w-4xl {
+  max-width: 56rem;
 }
 
 .items-center {
@@ -630,6 +630,11 @@ video {
   line-height: 1.25;
 }
 
+.text-blue-700 {
+  --tw-text-opacity: 1;
+  color: rgb(29 78 216 / var(--tw-text-opacity));
+}
+
 .text-gray-500 {
   --tw-text-opacity: 1;
   color: rgb(107 114 128 / var(--tw-text-opacity));
@@ -673,6 +678,11 @@ video {
 
   .lg\:pt-16 {
     padding-top: 4rem;
+  }
+
+  .lg\:text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
 
   .lg\:text-4xl {

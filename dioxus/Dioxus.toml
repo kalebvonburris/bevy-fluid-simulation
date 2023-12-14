@@ -6,7 +6,7 @@ out_dir = "../docs"
 
 [web.app]
 base_path = "bevy-fluid-simulation"
-title = "BevyFluidSimulationBlog"
+title = "Bevy Fluid Simulation Blog"
 
 [web.watcher]
 

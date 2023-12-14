@@ -540,22 +540,9 @@ video {
   --tw-backdrop-sepia:  ;
 }
 
-.bottom-0 {
-  bottom: 0px;
-}
-
-.top-0 {
-  top: 0px;
-}
-
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
-}
-
-.my-0 {
-  margin-top: 0px;
-  margin-bottom: 0px;
 }
 
 .mb-4 {
@@ -576,6 +563,10 @@ video {
 
 .inline-flex {
   display: inline-flex;
+}
+
+.h-screen {
+  height: 100vh;
 }
 
 .w-full {
@@ -674,6 +665,14 @@ video {
 @media (min-width: 1024px) {
   .lg\:mb-6 {
     margin-bottom: 1.5rem;
+  }
+
+  .lg\:pb-24 {
+    padding-bottom: 6rem;
+  }
+
+  .lg\:pt-16 {
+    padding-top: 4rem;
   }
 
   .lg\:text-4xl {

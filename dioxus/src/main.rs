@@ -10,7 +10,7 @@ fn main() {
 fn app(cx: Scope) -> Element {
     cx.render(rsx! {
         main {
-            class: "pt-8 pb-16 lg:pt-16 lg:pb-24 bg-white dark:bg-gray-900 antialiased text-gray-500 dark:text-gray-400 my-0 top-0 bottom-0",
+            class: "pt-8 pb-16 lg:pt-16 lg:pb-24 bg-white dark:bg-gray-900 antialiased text-gray-500 dark:text-gray-400 h-screen",
             div {
                 article {
                     class: "mx-auto w-full max-w-2xl format format-sm sm:format-base lg:format-lg format-blue dark:format-invert",

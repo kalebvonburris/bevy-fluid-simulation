@@ -7,8 +7,12 @@ module.exports = {
       "../docs/**/*.html",
   ],
   theme: {
+    latex: {
+			footnotes: false,
+			syntax: true,
+		},
     extend: {},
   },
-  plugins: [],
+  plugins: [require("latex-tailwind")],
 }
 

@@ -440,6 +440,86 @@ video {
   display: none;
 }
 
+@font-face {
+  font-family: 'Latin Modern';
+
+  font-style: normal;
+
+  font-weight: normal;
+
+  font-display: block;
+
+  src: url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-regular.ttf") format("truetype") , url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-regular.woff") format("woff"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: 'Latin Modern';
+
+  font-style: italic;
+
+  font-weight: normal;
+
+  font-display: block;
+
+  src: url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-italic.ttf") format("truetype"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-italic.woff") format("woff"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: 'Latin Modern';
+
+  font-style: normal;
+
+  font-weight: bold;
+
+  font-display: block;
+
+  src: url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-bold.ttf") format("truetype"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-bold.woff") format("woff"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: 'Latin Modern';
+
+  font-style: italic;
+
+  font-weight: bold;
+
+  font-display: block;
+
+  src: url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-bold-italic.ttf") format("truetype"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-bold-italic.woff") format("woff"), url("https://cdn.jsdelivr.net/gh/vincentdoerig/latex-css/fonts/LM-bold-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: 'CMU Typewriter Text';
+
+  font-style: normal;
+
+  font-weight: 500;
+
+  font-display: block;
+
+  src: url("https://fonts.cdnfonts.com/s/18083/cmuntt.woff") format("woff");
+}
+
+.latex-style ul ul, ul ol, ol ul, ol ol {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.latex-style code[class*='language-'],pre[class*='language-'] {
+  color: black;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  -moz-tab-size: 4;
+    -o-tab-size: 4;
+       tab-size: 4;
+  -webkit-hyphens: none;
+          hyphens: none;
+}
+
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
@@ -540,6 +620,28 @@ video {
   --tw-backdrop-sepia:  ;
 }
 
+.latex-style .author {
+  margin: 0.85rem 0;
+  font-variant-caps: small-caps;
+  text-align: center;
+}
+
+.latex-style .token.constant {
+  color: #000000;
+}
+
+.latex-style .token.entity {
+  font-style: italic;
+}
+
+.latex-style .token.url {
+  color: #9a6e3a;
+}
+
+.absolute {
+  position: absolute;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -563,10 +665,6 @@ video {
 
 .inline-flex {
   display: inline-flex;
-}
-
-.h-screen {
-  height: 100vh;
 }
 
 .w-full {

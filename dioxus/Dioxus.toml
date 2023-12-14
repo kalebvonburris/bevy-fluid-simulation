@@ -1,5 +1,5 @@
 ﻿[application]
-name = "Bevy-Fluid-Simulation-Blog"
+name = "Bevy Fluid Simulation Blog"
 default_platform = "web"
 out_dir = "../docs"
 

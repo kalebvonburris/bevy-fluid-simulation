@@ -1,11 +1,12 @@
 ﻿[application]
-name = "Bevy Fluid Simulation Blog"
+name = "Bevy-Fluid-Simulation-Blog"
 default_platform = "web"
 out_dir = "../docs"
-base_path = "bevy-fluid-simulation"
+
 
 [web.app]
-title = "Bevy Fluid Simulation Blog"
+base_path = "bevy-fluid-simulation"
+title = "BevyFluidSimulationBlog"
 
 [web.watcher]
 [web.resource]

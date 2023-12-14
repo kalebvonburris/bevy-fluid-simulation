@@ -9,5 +9,11 @@ base_path = "bevy-fluid-simulation"
 title = "BevyFluidSimulationBlog"
 
 [web.watcher]
+
+# include `assets` in web platform
 [web.resource]
+
+# CSS style file
+style = ["tailwind.css"]
+
 [web.resource.dev]

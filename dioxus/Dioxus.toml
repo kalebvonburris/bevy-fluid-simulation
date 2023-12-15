@@ -1,0 +1,19 @@
+﻿[application]
+name = "Bevy Fluid Simulation Blog"
+default_platform = "web"
+out_dir = "../docs"
+
+
+[web.app]
+base_path = "bevy-fluid-simulation"
+title = "Bevy Fluid Simulation Blog"
+
+[web.watcher]
+
+# include `assets` in web platform
+[web.resource]
+
+# CSS style file
+style = ["tailwind.css"]
+
+[web.resource.dev]

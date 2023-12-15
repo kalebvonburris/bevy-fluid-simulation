@@ -10,3 +10,7 @@ target/
 *.pdb
 
 CHANGELOG.md
+
+dist
+
+node_modules

@@ -84,13 +84,13 @@ fn app(cx: Scope) -> Element {
                     }
 
                     p {
-                        "Bevy is built with an ", b { "entity-component-system" }, " (ECS), which means that data is stored as components; think health bars, movement speed, textures, etc. Components are bundled together with an id, and each of these bundles is called an ", i { "entity" }, ". ", i { "Systems" }, " are functions that take ", i {"queries"}, " and perform operations on them; translations, mutations, collisions, etc. Bundling systems together creates " i { "plugins" }, " and a bundle of plugins is a game. You can also insert ", i { "resources" }, " data that isn't attached to entities in your world; things like terrain, sounds, music, global variables, etc."
+                        "Bevy is built with an ", b { "entity-component-system" }, " ((ECS)), which means that data is stored as components; think health bars, movement speed, textures, etc. Components are bundled together with an id, and each of these bundles is called an ", i { "entity" }, ". ", i { "Systems" }, " are functions that take ", i {"queries"}, " and perform operations on them; translations, mutations, collisions, etc. Bundling systems together creates " i { "plugins" }, " and a bundle of plugins is a game. You can also insert ", i { "resources" }, " data that isn't attached to entities in your world; things like terrain, sounds, music, global variables, etc."
                     }
 
                     br {}
 
                     h2 {
-                        class: "mb-4 text-3xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-3xl dark:text-white",
+                        class: "mb-4 text-2xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-2xl dark:text-white",
                         "Building a Simulation"
                     }
 
@@ -101,7 +101,7 @@ fn app(cx: Scope) -> Element {
                     br{}
 
                     h2 {
-                        class: "mb-4 text-3xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-3xl dark:text-white",
+                        class: "mb-4 text-2xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-2xl dark:text-white",
                         "Defining Collisions and Dispersion"
                     }
 
@@ -112,7 +112,7 @@ fn app(cx: Scope) -> Element {
                     br {}
 
                     p {
-                        "For inter-particle collisions, we check if the distance between the two particles is less than the sum of their radii. In that case, we also check to see if the particles are travelling towards each other. ", i { "Not having this check resulted in particles \"sticking\" together"}, ". If both cases are met, we apply the equation:"
+                        "For inter-particle collisions, we check if the distance between the two particles is less than the sum of their radii. In that case, we also check to see if the particles are travelling towards each other. ", i { "Not having this check resulted in particles \"sticking\" together. We do this by computing the difference in position dotted with the negative difference in velocity. The value will be positive if the particles are pointing towards each other"}, ". If both cases are met, we apply the equation:"
                     }
 
                     p {
@@ -120,20 +120,67 @@ fn app(cx: Scope) -> Element {
                         "$$  u_2 = v_2 - \\frac{{2m_{{1}}}}{{m_1 + m_2}}\\frac{{\\langle v_2 - v_1, x_2 - x_2\\rangle}}{{|| x_2 - x_1 ||^2}} (x_2 - x_1) $$"
                     }
 
-                    br {}
-
                     p {
-                        "For inter-boundary collisions, I used the borders of the window to define the boundaries, recieving those details via a resource call: ", code { "Res<&Window>" }, " . Notibly, calls to resources in Bevy and not queries. "
+                        "And then set the velocities of the particles to their respective values here, $u_1$ and $u_2$. These equations follow the conservation of momentum and thus our particles are at least accurate within these interactions."
                     }
 
                     br {}
 
                     p {
-                        "For the dispersion force, we can define the velocity changes to each particle as the distance between the two minus a constant, ", code { "SMOOTHING_RADIUS" }, " . This also has the consequence of allowing us to only search for particles with the ", code { "SMOOTHING_RADIUS" }, " radius."
+                        "For inter-boundary collisions, I used the borders of the window to define the boundaries, recieving those details via a resource call: ", code { "Res<&Window>" }, " . Notibly, calls to resources in Bevy are not queries, this is one area where Bevy's ECS can rear its head if you're not paying attention. Using the ", code { "&Window" }, " reference, we can get its width and height with ", code { "window.width()" }, " and ", code { "window.height()" }, " . We can interpret the position of the particles relative to these boundaries with ", code { "window.width() / 2.0" }, " and ", code { "window.height() / 2.0" }, " , any particle exceeding the positive and negative of these boundaries then has its x or y coordinate reset to the boundary and its x or y velocity component reflected as well."
+                    }
+
+                    br {}
+
+                    p {
+                        "For the dispersion force, we can define the velocity changes to each particle as the distance between the two minus a constant, ", code { "SMOOTHING_RADIUS" }, " . This also has the consequence of allowing us to only search for particles within the ", code { "SMOOTHING_RADIUS" }, " radius."
+                    }
+
+                    br {}
+
+                    h2 {
+                        class: "mb-4 text-2xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-2xl dark:text-white",
+                        "Optimizations"
                     }
 
                     p {
-                        "As of right now, the simulation is CPU-bound, meaning that all compuations are done entirely on the CPU, although I do make liberal use of Bevy's ", code { "par_iter()" }, " function to parallelize them. The issue with this is that your GPU can run thousands if not millions of computations in parallel, "
+                        "That's pretty much all that goes into a fluid simulation; a bunch of math and some rules to define behaviors. However, these rules on their own are not very efficient, with my first few iterations yielding acceptable FPS values of ~60fps with only a hundred particles."
+                    }
+
+                    br {}
+
+                    p {
+                        "To fix this, I came up with two solutions: ", b { "Multithreading" }, " and ", b { "Chunking" }, ". Both of these combined resulted in similar acceptable framerates of ~60fps with up to 20,000 particles."
+                    }
+
+                    br {}
+
+                    p {
+                        b { "Multithreading" }, " is the process of splitting up code across multiple threads to do work in parallel. Theoretically, if your machine had 128 cores, it could compute operations in parallel 128x faster than it currently does. This is typically not feasible though as at some point the threads have to communicate with each other, and a \"main\" thread has to collect and process all of the data processed in parallel, resulting in large bottlenecks if your system is not carefully defined. This process is also typically very syntactically difficult to implement in many languages, and so projects like OpenMP were created to turn this problem into a one-line with ", code { "#pragma omp ..." }, " . Luckily Rust has a similar library called ", code { "Rayon" }, " which allows you to parallelize iterators by turning their ", code { ".iter()" }, " calls into ", code { ".par_iter()" }, " calls. This is so useful that Bevy has this built-in to Queries, meaning that Rayon isn't needed for most of code. Implementing this increased the performance on my 8-core AMD machine to ~5,000 particles @ 60fps."
+                    }
+
+                    br {}
+
+                    p {
+                        b { "Chunking" }, " is the process of splitting up a large amount of data into smaller chunks, which can be accessed in parallel and reduce the number of distance calculations by a significant degree. My implementation chunks the world space and stores each chunk under an ", code { "RwLock" }, " a Rust data structure that allows multiple threads to read a piece of data in parallel, but locks it from reading when a write call is made to allow only a single thread to modify the underlying data. The alternative would be to use a ", code { "HashMap" }, " to store the chunks, but this would force each chunk to be entirely closed off from reading while any other thread is writing it, resulting in poor performance. There almost certainly is a superior approach to this problem, however I found myself short on time while I was implementing it. However, even as it is, the performance on my machine saw a dramatic increase to 20,000 particles @ 60fps."
+                    }
+
+                    br {}
+
+
+                    h2 {
+                        class: "mb-4 text-2xl font-bold leading-tight text-gray-900 lg:mb-6 lg:text-2xl dark:text-white",
+                        "Final Notes"
+                    }
+
+                    p {
+                        "As of right now, the simulation is CPU-bound, meaning that all compuations are done entirely on the CPU, although I do make liberal use of Bevy's ", code { "par_iter()" }, " function to parallelize them. Boon here is that your GPU can run thousands if not millions of computations in parallel, resulting in significant performance improvements of probably 10x-100x depending on the graphics card, if not more if the memory is persistent on the GPU. Bevy supports a library called ", b { "wgpu" }, ", a WebGPU API for Rust. This is awesome because WebGPU is a cross-platform, cross-graphics API... graphics API... that allows you to define regular render and compute tasks for the GPU. I look forward to expanding on this project with wgpu in the future, and I've even done some experiementation ", b { a { class: "text-blue-700", href: "https://github.com/kalebvonburris/rust-gpu-testing", "here" } }, " computing fibonacci numbers on the CPU and GPU and comparing your machine's performance."
+                    }
+
+                    br {}
+
+                    p {
+                        "This article was written in ", b {  a { class: "text-blue-700", href: "https://dioxuslabs.com", "Dioxus" } }, ", a Rust web framework! Yes, that's right! No raw Javascript or Javascript frameworks were used to harm the programmer in the making of this article. You can find the source code ", b { a { class: "text-blue-700", href: "https://github.com/kalebvonburris/bevy-fluid-simulation/blob/main/dioxus/src/main.rs", "here" } }, " and I think that's kinda neat. I was even able to talk to the lovely dev team at the Dioxus discord server about some GitHub pages hosting issues I had and recieved genuinely useful help within a few hours."
                     }
                 }
             }

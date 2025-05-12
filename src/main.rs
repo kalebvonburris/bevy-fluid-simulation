@@ -9,7 +9,7 @@ mod particle;
 
 use particle::*;
 
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
@@ -17,14 +17,13 @@ fn main() {
     // Removes the cmd window when running
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(Msaa::Sample4)
         .add_plugins(DefaultPlugins)
         .add_plugins(LogDiagnosticsPlugin::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin)
-        .init_resource::<Gravity>()
+        .add_plugins(FrameTimeDiagnosticsPlugin {
+            ..Default::default()
+        })
         .init_resource::<ChunkMapDoubleBuffer>()
         .add_systems(Startup, setup)
-        .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, simulate)
         .run();
 }
@@ -35,7 +34,7 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     // Create camera for 2D environment.
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d::default());
 
     let particle_diameter = 6.5;
 
@@ -46,11 +45,10 @@ fn setup(
     for y in 0..(x_max as u32) {
         for x in 0..(y_max as u32) {
             commands
-                .spawn(MaterialMesh2dBundle {
-                    mesh: meshes.add(Mesh::from(shape::Circle::default())).into(),
-                    material: materials.add(ColorMaterial::from(Color::BLUE)),
-                    ..default()
-                })
+                .spawn((
+                    Mesh2d(meshes.add(Mesh::from(Circle::default())).into()),
+                    MeshMaterial2d( materials.add(ColorMaterial::from(Color::LinearRgba(LinearRgba { red: 0., green: 0., blue: 1.0, alpha: 1.0 }))))
+                ))
                 .insert(Particle {
                     pos: Transform::from_xyz(
                         (x as f32 - (x_max / 2.0)) * particle_diameter,

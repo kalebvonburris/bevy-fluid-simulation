@@ -1,20 +1,20 @@
 workspace = { members = ["dioxus"] }
 [package]
 name = "bevy-fluid-simulation"
-version = "0.1.4"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.12.0"
-rand = "0.8.5"
-rayon = "1.8.0"
-webbrowser = { version = "0.8", features = ["hardened"] }
+bevy = "0.16.0"
+rand = "0.9.1"
+rayon = "1.10.0"
+webbrowser = { version = "1.0.1", features = ["hardened"] }
 
 
 [build-dependencies]
-embed-resource = "2.4.0"
+embed-resource = "3.0.2"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

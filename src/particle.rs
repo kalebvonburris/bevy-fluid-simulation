@@ -27,14 +27,6 @@ use std::sync::RwLock;
 use bevy::{prelude::*, time::Time, window::Window};
 
 /* -- Structs and impls -- */
-#[derive(Debug, Resource)]
-pub struct Gravity(Vec2);
-
-impl Default for Gravity {
-    fn default() -> Self {
-        Self(Vec2::new(0.0, -98.0))
-    }
-}
 #[derive(Component, Debug, Clone)]
 pub struct CircleCollider {
     pub radius: f32,
@@ -228,7 +220,7 @@ pub fn simulate(
 ) {
     // Create chunks
     // Extract the size of the window
-    let w_dimensions = &window.single().resolution;
+    let w_dimensions = &window.single().unwrap().resolution;
 
     let win_width = w_dimensions.width();
     let win_height = w_dimensions.height();
@@ -279,7 +271,7 @@ pub fn simulate(
     });
 
     // Grab the time since the last frame, using a const value for the min physics time
-    let delta_seconds = DELTA_TIME_MAX.min(time.delta_seconds());
+    let delta_seconds = DELTA_TIME_MAX.min(time.delta_secs());
 
     query
         .par_iter_mut()
@@ -342,7 +334,7 @@ pub fn simulate(
             particle.pos.translation.y += particle.velocity.vec[1] * delta_seconds;
 
             // Check for border collision
-            border_collision(&mut particle, window.single());
+            border_collision(&mut particle, window.single().unwrap());
 
             render_pos.translation = particle.pos.translation;
         });

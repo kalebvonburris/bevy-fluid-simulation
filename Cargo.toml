@@ -10,9 +10,9 @@ rand = "0.10.0"
 version = "0.18.1"
 default-features = false
 features = [
-    "default_app",       # Core framework: assets, windowing, logging, state.
-    "default_platform",  # Platform backends: winit, multi_threaded, x11/wayland.
-    "2d_bevy_render",    # 2D renderer: Mesh2d, ColorMaterial, core pipeline.
+  "default_app",      # Core framework: assets, windowing, logging, state.
+  "default_platform", # Platform backends: winit, multi_threaded, x11/wayland.
+  "2d_bevy_render",   # 2D renderer: Mesh2d, ColorMaterial, core pipeline.
 ]
 
 [profile.dev]
@@ -22,7 +22,8 @@ opt-level = 1
 opt-level = 3
 strip = true
 panic = "abort"
-lto = "thin"
+lto = true
+codegen-units = 1
 
 # High optimization for deps in debug builds.
 [profile.dev.package."*"]

@@ -68,25 +68,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Install rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-      - name: Setup Rust Cache
-        uses: Swatinem/rust-cache@v2
-      - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get -y install pkg-config libx11-dev libasound2-dev libudev-dev
-      - name: Build release
-        run: |
+      - name: Build and Prep
+        uses: nicknovitski/nix-develop@v1
+      - run: |
           cargo build --release
-      - name: Prepare release
-        run: |
-          strip target/release/${{ env.GAME_EXECUTABLE_NAME }}
           chmod +x target/release/${{ env.GAME_EXECUTABLE_NAME }}
           mv target/release/${{ env.GAME_EXECUTABLE_NAME }} .
+          upx -f9 ${{ env.GAME_EXECUTABLE_NAME }}
       - name: Bundle release
         run: |
-          tar -czf ${{ env.GAME_EXECUTABLE_NAME }}_linux.tar.gz ${{ env.GAME_EXECUTABLE_NAME }} assets credits
+          tar -czf ${{ env.GAME_EXECUTABLE_NAME }}_linux.tar.gz ${{ env.GAME_EXECUTABLE_NAME }}
       - name: Upload release
         uses: svenstaro/upload-release-action@v2
         with:
@@ -115,7 +106,7 @@ jobs:
       - name: Zip release
         uses: vimtor/action-zip@v1
         with:
-          files: assets/ credits/ target/release/${{ env.GAME_EXECUTABLE_NAME }}.exe
+          files: target/release/${{ env.GAME_EXECUTABLE_NAME }}.exe
           dest: ${{ env.GAME_EXECUTABLE_NAME }}_windows.zip
       - name: Upload release
         uses: svenstaro/upload-release-action@v2
@@ -125,4 +116,3 @@ jobs:
           asset_name: ${{ env.GAME_EXECUTABLE_NAME }}_${{ env.VERSION }}_windows.zip
           tag: ${{ env.VERSION }}
           overwrite: true
-

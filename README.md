@@ -14,8 +14,8 @@ Download the relevant binary from the [latest release](https://github.com/kalebv
 
 ##### Rust
 
-Minimum version: 1.76.0 Nightly
-*The toolchain is specified to be Nightly in this project automatically.*
+Minimum version: 1.92.1 Nightly
+_The toolchain is specified to be Nightly in this project automatically._
 
 It's recommended to install Rust via [Rustup](https://rustup.rs/).
 
@@ -35,4 +35,4 @@ git clone https://github.com/kalebvonburris/bevy-fluid-simulation
 cargo run --release
 ```
 
-Note: *Bevy is an entire game engine. Thus, the build generated will take several minutes (for my 8-core AMD rig, 3-4 minutes) and create several gigabytes of extra data (3-4GB).*
+Note: _Bevy is an entire game engine. Thus, the build generated will take several minutes (for my 8-core AMD rig, 3-4 minutes) and create several gigabytes of extra data (3-4GB)._

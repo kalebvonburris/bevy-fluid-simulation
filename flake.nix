@@ -16,7 +16,7 @@
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
 
-        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
+        rustToolchain = pkgs.rust-bin.nightly.latest.default.override {
           extensions = [ "rust-src" "rust-analyzer" "clippy" ];
         };
 
@@ -33,8 +33,8 @@
           # Audio
           alsa-lib
 
-          # Hotpatching
-          dioxus-cli
+          # Binary compression
+          upx
 
           # Windowing — X11
           libx11

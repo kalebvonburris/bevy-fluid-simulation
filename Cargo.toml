@@ -1,36 +1,29 @@
-workspace = { members = ["dioxus"] }
 [package]
 name = "bevy-fluid-simulation"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-bevy = "0.16.0"
-rand = "0.9.1"
-rayon = "1.10.0"
-webbrowser = { version = "1.0.1", features = ["hardened"] }
+rand = "0.10.0"
 
+[dependencies.bevy]
+version = "0.18.1"
+default-features = false
+features = [
+    "default_app",       # Core framework: assets, windowing, logging, state.
+    "default_platform",  # Platform backends: winit, multi_threaded, x11/wayland.
+    "2d_bevy_render",    # 2D renderer: Mesh2d, ColorMaterial, core pipeline.
+]
 
-[build-dependencies]
-embed-resource = "3.0.2"
-
-# Enable a small amount of optimization in debug mode
 [profile.dev]
 opt-level = 1
 
 [profile.release]
 opt-level = 3
 strip = true
-panic = 'abort'
+panic = "abort"
 lto = "thin"
 
-[profile.profiling]
-inherits = "release"
-debug = true
-
-# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+# High optimization for deps in debug builds.
 [profile.dev.package."*"]
 opt-level = 3
-

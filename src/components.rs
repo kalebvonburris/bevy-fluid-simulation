@@ -18,7 +18,7 @@ impl Default for SimConfig {
             max_speed: 500.0,
             smoothing_radius: 30.0,
             max_dt: 1.0 / 60.0,
-            particle_radius: 1.5,
+            particle_radius: 3.25,
             grid_spawn_size: 100,
             spawn_spacing: 2.0,
         }

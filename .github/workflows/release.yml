@@ -68,6 +68,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Prep
         uses: nicknovitski/nix-develop@v1
       - run: |

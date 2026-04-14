@@ -4,7 +4,7 @@ version = "0.3.0"
 edition = "2024"
 
 [dependencies]
-rand = "0.10.0"
+rand = "0.10.1"
 
 [dependencies.bevy]
 version = "0.18.1"
